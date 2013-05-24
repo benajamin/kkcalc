@@ -1,0 +1,879 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import wx, os
+import wx.lib.plot as plot
+from wx.lib.fancytext import StaticFancyText
+import scipy, scipy.io, scipy.interpolate, scipy.fftpack#, scipy.integrate
+import numpy
+import math
+
+import time #only for profiling
+
+classical_electron_radius = 2.81794029957951365441605230194258e-15# meters
+Plancks_constant = 4.1356673310e-15 # eV*seconds
+speed_of_light = 2.99792458e8 # meters per second
+Avogadro_constant = 6.02214129e23
+
+
+class SaveFrame(wx.Frame):
+	def __init__(self, Parent):
+		print Parent.MolecularFormula, Parent.MolecularMass
+		wx.Frame.__init__(self, None, wx.ID_ANY, "Export Data", size=(500, 800))
+		SizerV = wx.BoxSizer(wx.VERTICAL)
+		MetadataBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Metadata"), wx.VERTICAL)
+		SizerV.Add(MetadataBox,3,wx.GROW)
+		
+		SizerH0 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH0.Add(wx.StaticText(self, -1, "Acronym:"))
+		SizerH0.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		MetadataBox.Add(SizerH0,0,wx.GROW)
+		
+		SizerH1 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH1.Add(wx.StaticText(self, -1, "Name:"))
+		SizerH1.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		MetadataBox.Add(SizerH1,0,wx.GROW)
+		
+		SizerH2 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH2.Add(wx.StaticText(self, -1, "Formula:"))
+		SizerH2.Add((1,1),1,wx.GROW)
+		SizerH2.Add(wx.StaticText(self, -1, Parent.MolecularFormula, style=wx.ALIGN_RIGHT))
+		MetadataBox.Add(SizerH2,0,wx.GROW)
+		
+		SizerH3 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH3.Add(wx.StaticText(self, -1, "Formula Mass:"))
+		SizerH3.Add((1,1),1,wx.GROW)
+		SizerH3.Add(wx.StaticText(self, -1, str(Parent.MolecularMass), style=wx.ALIGN_RIGHT))
+		MetadataBox.Add(SizerH3,0,wx.GROW)
+		
+		SizerH4 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH4.Add(wx.StaticText(self, -1, "Density:"))
+		self.DensityText = wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER)
+		SizerH4.Add(self.DensityText,1,wx.GROW)
+		SizerH4.Add(StaticFancyText(self, -1, "(g/cm<sup>3</sup>)"))
+		MetadataBox.Add(SizerH4,0,wx.GROW)
+		
+		SizerH5 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH5.Add(wx.StaticText(self, -1, "Reference:"))
+		SizerH5.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		MetadataBox.Add(SizerH5,0,wx.GROW)
+		
+		SizerH6 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH6.Add(wx.StaticText(self, -1, "Source:"))
+		SizerH6.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		MetadataBox.Add(SizerH6,0,wx.GROW)
+		
+		SizerH7 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH7.Add(wx.StaticText(self, -1, "Acquisition:"))
+		SizerH7.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		MetadataBox.Add(SizerH7,0,wx.GROW)
+		
+		SizerH8 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH8.Add(wx.StaticText(self, -1, "Abs. Edge (Resolution):"))
+		SizerH8.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		MetadataBox.Add(SizerH8,0,wx.GROW)
+		
+		SizerH9 = wx.BoxSizer(wx.HORIZONTAL)
+		SizerH9.Add(wx.StaticText(self, -1, "Incidence Angle:"))
+		SizerH9.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER),1,wx.GROW)
+		SizerH9.Add(wx.StaticText(self, -1, "(\xb0)".decode('ISO8859-1')))
+		MetadataBox.Add(SizerH9,0,wx.GROW)
+		
+		FormatBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Format"), wx.VERTICAL)
+		FormatBox.Add(wx.RadioButton(self, -1, "Scattering Factor", style=wx.RB_GROUP))
+		self.CRIRadio = wx.RadioButton(self, -1, "Complex Refractive Index")
+		FormatBox.Add(self.CRIRadio)
+		FormatBox.Add(wx.RadioButton(self, -1, "Photoabsorption Coefficient"))
+		SizerV.Add(FormatBox,1,wx.GROW)
+		
+		SaveButton = wx.Button(self, -1, "Save")
+		SaveButton.Bind(wx.EVT_BUTTON, self.Save)
+		SizerV.Add(SaveButton,0,wx.CENTER)
+
+		self.SetSizer(SizerV)			   #add outer sizer to frame
+		self.Fit()
+		
+		self.Show(True)
+
+	def Save(self,evt):
+		print "do something"
+		print self.CRIRadio.GetValue(), self.DensityText.GetValue()
+		
+		if self.CRIRadio.GetValue():
+			num_value = None
+			try:
+				num_value = float(self.DensityText.GetValue())
+			except ValueError:
+				print "'", self.DensityText.GetValue(), "' is not a number!"
+			if num_value is not None:
+			  print "can safely save"
+		#Get values
+		
+		#Convert values
+		
+		self.Close(True)  # Close the frame.
+		
+		#choose filename
+		
+		#write data
+		
+		
+
+class MyFrame(wx.Frame):
+	def __init__(self):
+		#Initialise variables
+		self.dirname=''
+		self.raw_file=None
+		self.total_asf=None
+		self.merged_Im=None
+		self.nexafs_CutOut=[]
+		self.KK_Re=None
+		self.MolecularMass = 1
+		self.asf_bg=None
+		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]# Get data about elements
+		self.parse_BL_file()# Get Biggs and Lighthill data
+		
+		wx.Frame.__init__(self, None, wx.ID_ANY, "Kramers-Kronig Calculator", size=(500, 800))
+		# Setting up the menus.
+		filemenu= wx.Menu()
+		filemenu.Append(wx.ID_OPEN, "L&oad"," Load photoabsorption data from file")
+		filemenu.AppendSeparator()
+		filemenu.Append(wx.ID_SAVE, "&Save"," Export results to file")
+		filemenu.AppendSeparator()
+		filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
+		helpmenu= wx.Menu()
+		helpmenu.Append(wx.ID_HELP, "&Help"," How to use this program")
+		helpmenu.AppendSeparator()
+		helpmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
+		# Creating the menubar.
+		menuBar = wx.MenuBar()
+		menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
+		menuBar.Append(helpmenu,"&Help") # Adding the "helpmenu" to the MenuBar
+		self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
+		wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
+		wx.EVT_MENU(self, wx.ID_SAVE, self.OnSave)
+		wx.EVT_MENU(self, wx.ID_EXIT, self.OnExit)
+		wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
+		wx.EVT_MENU(self, wx.ID_HELP, self.OnHelp)
+		
+		
+		Sizer1 = wx.BoxSizer(wx.HORIZONTAL) #create outer sizer
+		SizerL = wx.BoxSizer(wx.VERTICAL)   #create left-hand sizer for controls
+		SizerR = wx.BoxSizer(wx.VERTICAL)   #create right-hand sizer for plots
+		############################Data box
+		DataBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Near-Edge Data"), wx.VERTICAL)
+		self.FileText = wx.StaticText(self, -1, "File: (None)")
+		DataBox.Add(self.FileText, 1, wx.GROW)
+		DataTypeLabel = wx.StaticText(self, -1, "Data Type: ")
+		self.DataTypeCombo = wx.ComboBox(self, -1, value='Photoabsorption', style=wx.CB_READONLY)
+		self.DataTypeCombo.Append('Photoabsorption')
+		self.DataTypeCombo.Append('Beta')
+		self.DataTypeCombo.Append('Scattering Factor')
+		self.DataTypeCombo.Bind(wx.EVT_COMBOBOX, self.MergeAdd_check)
+		DataTypeSizer = wx.BoxSizer(wx.HORIZONTAL)
+		DataTypeSizer.Add(DataTypeLabel)
+		DataTypeSizer.Add(self.DataTypeCombo, 2, wx.GROW)
+		DataBox.Add(DataTypeSizer, 1, wx.GROW)
+		SpliceSizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.SpliceText1 = wx.TextCtrl(self, -1, "Start", style=wx.TE_PROCESS_ENTER)
+		self.SpliceText1.Bind(wx.EVT_KILL_FOCUS, self.Splice_Text_check)
+		self.SpliceText1.Bind(wx.EVT_TEXT_ENTER, self.Splice_Text_check)
+		SpliceSizer.Add(self.SpliceText1, 1)
+		self.SpliceText2 = wx.TextCtrl(self, -1, "End", style=wx.TE_PROCESS_ENTER)
+		self.SpliceText2.Bind(wx.EVT_KILL_FOCUS, self.Splice_Text_check)
+		self.SpliceText2.Bind(wx.EVT_TEXT_ENTER, self.Splice_Text_check)
+		SpliceSizer.Add(self.SpliceText2, 1)
+		DataBox.Add(SpliceSizer, 1, wx.GROW)
+		
+		#Background_CloseSizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.AddBackgroundCheckBox = wx.CheckBox(self, -1, "Add background")
+		self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
+		DataBox.Add(self.AddBackgroundCheckBox, 0)
+		#Background_CloseSizer.Add(self.AddBackgroundCheckBox, 0)
+		#self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.MergeAdd_check)
+		#Background_CloseSizer.AddStretchSpacer(1)
+		#self.CloseFile = wx.Button(self, -1, "X", style= wx.BU_EXACTFIT)
+		#Background_CloseSizer.Add(self.CloseFile, 0)
+		#DataBox.Add(Background_CloseSizer, 1, wx.GROW)
+		
+		############################Material box
+		self.MaterialBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Material"), wx.VERTICAL)
+		DensitySizer = wx.BoxSizer(wx.HORIZONTAL)
+		DensitySizer.Add(wx.StaticText(self, -1, "Density: "))
+		self.DensityText = wx.TextCtrl(self, -1, "1", style=wx.TE_PROCESS_ENTER)
+		self.DensityText.Bind(wx.EVT_KILL_FOCUS, self.Splice_Text_check)
+		self.DensityText.Bind(wx.EVT_TEXT_ENTER, self.Splice_Text_check)
+		DensitySizer.Add(self.DensityText, 1)
+		DensitySizer.Add(wx.StaticText(self, -1, " g/ml"))
+		self.MaterialBox.Add(DensitySizer, 0)
+		self.MaterialBox.Add(wx.StaticText(self, -1, "Stoichiometry: "))
+		self.MaterialBox.contents = []
+		self.add_element()
+		self.MaterialBox.AddStretchSpacer(1)
+		
+		############################Calc box
+		CalcBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Calculation"), wx.VERTICAL)
+		self.PP_AlgorithmRadio = wx.RadioButton(self, -1, "Piecewise-polynomial", style=wx.RB_GROUP)
+		self.FFT_AlgorithmRadio = wx.RadioButton(self, -1, "FFT-based")
+		CalcBox.Add(self.PP_AlgorithmRadio, 1, wx.GROW)
+		CalcBox.Add(self.FFT_AlgorithmRadio, 1, wx.GROW)
+		CalcButton = wx.Button(self, -1, "Calculate")
+		CalcBox.Add(CalcButton, 1, wx.GROW)
+		CalcButton.Bind(wx.EVT_BUTTON, self.calculate)
+		
+		
+		
+		SizerL.Add(DataBox, 0, wx.GROW)
+		SizerL.Add(self.MaterialBox, 1, wx.GROW)
+		SizerL.Add(CalcBox, 0, wx.GROW)
+		
+		
+		
+		
+		self.Iplot = plot.PlotCanvas(self)
+		self.Rplot = plot.PlotCanvas(self)
+		
+		SizerR.Add(self.Iplot, 1, wx.GROW)
+		SizerR.Add(self.Rplot, 1, wx.GROW)
+		# enable the zoom feature (drag a box around area of interest)
+		self.Iplot.SetEnableZoom(True)
+		self.Rplot.SetEnableZoom(True)
+		
+		
+		Sizer1.Add(SizerL, 1, wx.GROW)
+		Sizer1.Add(SizerR, 3, wx.GROW)
+		self.SetAutoLayout(True)
+		self.SetSizer(Sizer1)			   #add outer sizer to frame
+		self.Fit()
+		
+		self.Show(True)
+		self.plot_data()
+		#self.Test()
+	
+	def Test(self):
+		""" Convenience function for repetitive testing """
+		self.filename="NC-Xy_norm_bgsub.txt"
+		self.dirname="data"
+		self.FileText.SetLabel("File: "+self.filename)
+		self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
+		self.AddBackgroundCheckBox.SetValue(True)
+		self.combine_data()
+		self.PP_AlgorithmRadio.SetValue(True)
+		self.plot_data()
+		
+		
+		
+	
+	def OnAbout(self,e):
+		d= wx.MessageDialog( self, " A utility for calculating the real part of soft X-ray spectra.\nWritten by Dr. Benjamin Watts at the Paul Scherrer Institut","About KKcalc", wx.OK)
+		# Create a message dialog box
+		d.ShowModal() # Shows it
+		d.Destroy() # finally destroy it when finished.
+	def OnExit(self,e):
+		self.Close(True)  # Close the frame.
+	def OnOpen(self,e):
+		""" Load data from a file"""
+		success = False
+		if wx.version() in ['2.8.12.1 (gtk2-unicode)','2.8.12.1 (gtk2)']:#Add buggy WX versions to this list!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			print 'use Tk work-around'
+			import Tkinter
+			from tkFileDialog import askopenfilename
+			root = Tkinter.Tk()
+			root.withdraw()
+			output = askopenfilename()
+			root.destroy()
+			print output, len(output)
+			if len(output) is not 0:
+				success = True
+				self.dirname, self.filename = os.path.split(output)
+		else:
+			dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.OPEN)
+			if dlg.ShowModal() == wx.ID_OK:
+				success = True
+				self.filename=dlg.GetFilename()
+				self.dirname=dlg.GetDirectory()
+				if not os.path.exists(os.path.join(self.dirname, self.filename)):
+					print 'Did you choose a file in '+self.dirname+'? This might be a known bug in WX. The current WX version number is:'
+					print wx.version()
+					print 'Add the above version string to the list in the python code near line 270 (a comment in the code will show the exact location) to use a workaround.'
+			dlg.Destroy()
+		if success:
+			print self.dirname, self.filename
+			self.FileText.SetLabel("File: "+self.filename)
+			self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
+			
+			self.combine_data()
+			self.plot_data()
+	
+	def ConvertData(self,raw_data):
+		if len(raw_data)!=0:
+			raw_Im = raw_data[:,:2].copy()
+			data_type = self.DataTypeCombo.GetSelection()
+			if data_type==1:#Beta
+				print "Convert from Beta (type=", data_type, ") to Scattering Factors."
+				density = float(self.DensityText.GetValue())
+				raw_Im[:,1] = density*Avogadro_constant*2*numpy.pi*raw_data[:,0]**2*raw_data[:,1]/(self.MolecularMass*classical_electron_radius*(Plancks_constant*speed_of_light)**2)
+			elif data_type==2:#Scattering factor
+				print "Data is already in terms of Scattering Factors (type=", data_type, ")."
+			else:#(data_type== 0 or -1) Assume Photoabsorption data
+				print "Convert NEXAFS photoabsorption data to Scattering Factors."
+				raw_Im[:,1] = raw_data[:,0]*raw_data[:,1]/(2*classical_electron_radius*Plancks_constant*speed_of_light)
+			return raw_Im
+		
+
+	def OnHelp(self,e):
+		print "Opening web browser for help files."
+		import webbrowser
+		webbrowser.open("KKcalc.html")
+
+
+	def OnSave(self,e):
+		""" Write data to file"""
+		print "Save"
+		f = SaveFrame(self)
+		print "done!"
+		if self.KK_Re is not None:
+			fd = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+			if fd.ShowModal()==wx.ID_OK:
+				outfile = open(os.path.join(fd.GetDirectory(),fd.GetFilename()),"w")
+				outfile.write('Scattering factors for '+self.MolecularFormula+'\n')
+				outfile.write('E(eV)\tf1\tf2\n')
+				for i in xrange(len(self.merged_Im[:,0])):
+	#				outfile.write("{0}\t{1}\t{2}\n".format(self.merged_Im[i,0],self.KK_Re[i],self.merged_Im[i,1]))#Python 3.0 style
+					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.merged_Im[i,0],'Re':self.KK_Re[i],'Im':self.merged_Im[i,1]})#old formatting style
+				outfile.close()
+			print "Scattering factors for", self.MolecularFormula, "saved to ", fd.GetFilename()
+		else:
+			print "Nothing to save."
+
+	def LoadData(self,filename):
+		""" Read a standard ascii file and return a list of lists of floats"""
+		data = []
+		if os.path.isfile(filename):
+			for line in open(filename):
+				try:
+					data.append([float(f) for f in line.split()])
+				except ValueError:
+					pass
+			data = numpy.array(data)
+		else:
+			print "Error:", filename, "is not a valid file name."
+		if len(data)==0:
+			print "Error: no data found in", filename
+			return []
+		else:
+			return data
+		
+	def combine_data(self):
+		"""Extend NEXAFS data with Henke data"""
+		if self.raw_file is not None:
+			print "Convert to scattering factors"
+			raw_Im = self.ConvertData(self.raw_file)
+		print "Combine Data"
+		#Get splice points
+		splice_eV = numpy.array([10,30000])#Henke limits
+		if self.SpliceText1.GetValue() == "Start":
+			if self.raw_file is not None:
+				splice_eV[0] = raw_Im[0,0]
+		else:
+			splice_eV[0] = float(self.SpliceText1.GetValue())
+		if self.SpliceText2.GetValue() == "End":
+			if self.raw_file is not None:
+				splice_eV[1] = raw_Im[-1,0]
+		else:
+			splice_eV[1] = float(self.SpliceText2.GetValue())
+		
+		if self.raw_file is not None and self.total_asf is None:
+			splice_nexafs_Im = numpy.interp(splice_eV,raw_Im[:,0],raw_Im[:,1])
+			cut_boolean = (splice_eV[0]<raw_Im[:,0]) == (raw_Im[:,0]<splice_eV[1])
+			nexafs_cut = raw_Im[cut_boolean]
+			self.merged_Im = numpy.vstack(((splice_eV[0],splice_nexafs_Im[0]),nexafs_cut,(splice_eV[1],splice_nexafs_Im[1])))
+			#Extras for plotting
+			self.splice_ind = (0,-1)
+			cut_boolean = (splice_eV[0]<=raw_Im[:,0]) != (raw_Im[:,0]<=splice_eV[1])
+			self.nexafs_CutOut = raw_Im[cut_boolean]
+			self.asf_bg = None #We won't be using this variable this time
+			
+		elif self.raw_file is None and self.total_asf is not None:
+			self.merged_Im = self.total_asf[:,[0,2]]
+			#Extras for plotting
+			self.splice_ind = (0,-1)
+			self.nexafs_CutOut = None
+			self.asf_bg = None #We won't be using this variable this time
+			
+		elif self.raw_file is not None and self.total_asf is not None:
+			#get start and end Y values from nexafs and asf data
+			splice_nexafs_Im = numpy.interp(splice_eV,raw_Im[:,0],raw_Im[:,1])
+			splice_asf_Im = numpy.interp(splice_eV,self.total_asf[:,0],self.total_asf[:,2])
+			cut_boolean = (splice_eV[0]<raw_Im[:,0]) == (raw_Im[:,0]<splice_eV[1])
+			# Merge Y values
+			if not self.AddBackgroundCheckBox.GetValue():
+				print "Merge data sets"
+				scale = (splice_asf_Im[1]-splice_asf_Im[0])/(splice_nexafs_Im[1]-splice_nexafs_Im[0])
+				scaled_nexafs_Im = ((raw_Im[:,1]-splice_nexafs_Im[0])*scale)+splice_asf_Im[0]
+				self.asf_bg = None #We won't be using this variable this time
+			else:
+				print "Add data sets"
+				#Set up background function
+				#We trust this point to be just before the absorption edge
+				trusted_ind = max(0,numpy.where(self.total_asf[:,0]>splice_eV[0])[0][0]-1)
+				Log_total_asf = numpy.log(self.total_asf[:,2])
+				#Lets trust the 5 points before our trusted point and make an initial guess at the background function
+				p = numpy.polyfit(self.total_asf[(trusted_ind-5):trusted_ind,0],Log_total_asf[(trusted_ind-5):trusted_ind],1)
+				#Now lets look for the points up util the absorption edge
+				p_vals = numpy.exp(numpy.polyval(p,self.total_asf[(trusted_ind-5):-1,0]))
+				p_err = max(p_vals[0:5]-self.total_asf[(trusted_ind-5):trusted_ind,2])
+				edge_ind = numpy.where(self.total_asf[trusted_ind:-1,2]-p_vals[4:-1]>p_err*10)
+				if len(edge_ind[0])!=0:
+					edge_ind=edge_ind[0][0]
+				else:
+					edge_ind=trusted_ind
+				#Redo background using the 5 points before the background point
+				p = numpy.polyfit( self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind,0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind],1)
+				asf_bg = numpy.exp(numpy.polyval(p,raw_Im[:,0]))
+				print "Background defined as: y=exp(%(p1)ex %(p0)+e)" % {"p1":p[1], "p0":p[0]}
+				#Apply background function
+				scale = (splice_asf_Im[1]-numpy.exp(numpy.polyval(p,splice_eV[1])))/splice_nexafs_Im[1]
+				scaled_nexafs_Im = raw_Im[:,1]*scale+asf_bg
+				#store background data for plotting
+				cut_boolean_wide = numpy.roll(cut_boolean,-1) + numpy.roll(cut_boolean,1)
+				self.asf_bg = [[trusted_ind+edge_ind-5,trusted_ind+edge_ind], numpy.vstack((raw_Im[cut_boolean_wide,0],asf_bg[cut_boolean_wide])).T]
+			
+			nexafs_cut = numpy.vstack((raw_Im[cut_boolean,0],scaled_nexafs_Im[cut_boolean])).T
+			#merge data sets together
+			asf_cut_high = self.total_asf[self.total_asf[:,0]>splice_eV[1],:]
+			asf_cut_low = self.total_asf[self.total_asf[:,0]<splice_eV[0],:]
+			self.merged_Im = numpy.vstack((asf_cut_low[:,[0,2]],(splice_eV[0],splice_asf_Im[0]),nexafs_cut,(splice_eV[1],splice_asf_Im[1]),asf_cut_high[:,[0,2]]))
+			#Extras for plotting
+			self.splice_ind = (len(asf_cut_low[:,0]),-len(asf_cut_high[:,0]))
+			cut_boolean = (splice_eV[0]<=raw_Im[:,0]) != (raw_Im[:,0]<=splice_eV[1])
+			self.nexafs_CutOut = numpy.vstack((raw_Im[cut_boolean,0],scaled_nexafs_Im[cut_boolean])).T
+		#Previous calculation of f_1 is no longer matching displayed f_2 data
+		self.KK_Re = None
+				
+		
+		
+	def plot_data(self):
+		"""Plot data"""
+		print "plotting data"
+		#List of things to plot
+		plotlist_Im = []
+		plotlist_Re = []
+		# get initial guess at X limits
+		X_min = 0
+		X_max = 30000
+		Y_Im_max = 1
+		Y_Im_min = 0
+		Y_Re_max = 1
+		Y_Re_min = 0
+		if self.raw_file is not None:
+			X_min = self.raw_file[0,0]
+			X_max = self.raw_file[-1,0]
+		if self.SpliceText1.GetValue() != "Start":
+			X_min = float(self.SpliceText1.GetValue())
+		if self.SpliceText2.GetValue() != "End":
+			X_max = float(self.SpliceText2.GetValue())
+		if self.raw_file is not None:
+			print "plot raw data only"
+			# get Y limits
+			Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
+			Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
+			plotlist_Im.append(plot.PolyLine(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],:], colour='blue', width=1))#User data
+			if len(self.nexafs_CutOut)!=0:
+				plotlist_Im.append(plot.PolyMarker(self.nexafs_CutOut, colour='blue', marker='cross', size=1))
+			if self.asf_bg is not None:
+				plotlist_Im.append(plot.PolyMarker(self.total_asf[self.asf_bg[0][0]:self.asf_bg[0][1],[0,2]], colour='red', marker='cross', size=1))
+				plotlist_Im.append(plot.PolyLine(self.asf_bg[1], colour='red', width=1))
+		
+		if self.total_asf is not None:
+			if self.raw_file is not None:
+				print "plot everything"
+				# get Y limits
+				Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
+				Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
+				plotlist_Im.append(plot.PolyLine(self.merged_Im[0:(self.splice_ind[0]+1),:], colour='black', width=1))#Low energy Henke data
+				plotlist_Im.append(plot.PolyLine(self.merged_Im[(self.splice_ind[1]-1):-1,:], colour='black', width=1))#High energy Henke data
+			else:
+				print "plot asf data only"
+				Y_Im_max = max(self.total_asf[(X_min<=self.total_asf[:,0])==(self.total_asf[:,0]<=X_max),2])
+				Y_Im_min = min(self.total_asf[(X_min<=self.total_asf[:,0])==(self.total_asf[:,0]<=X_max),2])
+				plotlist_Im.append(plot.PolyLine(self.total_asf[:,[0,2]], colour='black', width=1))
+			
+			
+			# Real axes
+			total_asf_CUT = (X_min<=self.total_asf[:,0])==(self.total_asf[:,0]<=X_max)
+			Y_Re_max = max(self.total_asf[total_asf_CUT,1])
+			Y_Re_min = min(self.total_asf[total_asf_CUT & (self.total_asf[:,1]>-100*self.KK_Relativistic_Correction()),1])
+			plotlist_Re.append(plot.PolyLine(self.total_asf[:,[0,1]], colour='black', width=1))
+		if self.KK_Re is not None:
+			Y_Re_max = max(Y_Re_max,max(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
+			Y_Re_min = min(Y_Re_min,min(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
+			plotlist_Re.append(plot.PolyLine(numpy.vstack((self.merged_Im[:,0],self.KK_Re)).T, colour='green', width=1))
+		
+		#Expand plotting limits for prettiness
+		window_width = X_max-X_min
+		X_max = min(X_max+window_width*0.1,30000)
+		X_min = max(X_min-window_width*0.1,0)
+		window_Im_height = Y_Im_max-Y_Im_min
+		window_Re_height = Y_Re_max-Y_Re_min
+		Y_Im_max = Y_Im_max+window_Im_height*0.1
+		Y_Im_min = Y_Im_min-window_Im_height*0.1
+		Y_Re_max = Y_Re_max+window_Re_height*0.1
+		Y_Re_min = Y_Re_min-window_Re_height*0.1
+		# set up text, axis and draw
+		self.Iplot.Draw(plot.PlotGraphics(plotlist_Im, '', '', 'Imaginary'), xAxis=(X_min, X_max), yAxis=(0, Y_Im_max))
+		self.Rplot.Draw(plot.PlotGraphics(plotlist_Re, '', 'Energy (eV)', 'Real'), xAxis=(X_min, X_max), yAxis=(Y_Re_min, Y_Re_max))
+		
+		
+
+	def select_element(self,evt):
+		"""Select an element"""
+		cb = evt.GetEventObject()
+		data = cb.GetClientData(evt.GetSelection())
+		print "data =", data
+		datalist = []
+		n=0
+		N=None
+		for box in self.MaterialBox.contents:
+			datalist.append(box[1].GetClientData(box[1].GetSelection()))
+			if box[1]==cb:
+				N=n
+			n=n+1
+		try: #check corresponding textctrl and put in a 1 if empty
+			num_value = float(self.MaterialBox.contents[N][2].GetValue())
+		except ValueError:
+			self.MaterialBox.contents[N][2].SetValue("1")
+		
+		if data == None: #might need to remove a box
+			if None in datalist and datalist.index(None) != len(datalist)-1:
+				#remove extra boxes
+				dead_box = datalist.index(None)
+				#Remove and destroy combobox
+#				self.MaterialBox.contents[dead_box][0].Clear(True)
+				self.MaterialBox.contents[dead_box][0].Detach(0)
+				self.MaterialBox.contents[dead_box][1].Destroy()
+				#Remove and destroy textbox
+				self.MaterialBox.contents[dead_box][0].Detach(0)
+				self.MaterialBox.contents[dead_box][2].Destroy()
+				#Remove (no need to destroy) ElementSizer
+				self.MaterialBox.Remove(dead_box+2)
+				#delete reference to items in saved list
+				self.MaterialBox.contents.remove(self.MaterialBox.contents[dead_box])
+				#adjust GUI layout
+				self.Layout()
+		else:
+			print "Load nff data from:", os.path.join(os.getcwd(), 'asf', data[1])
+			asfrawdata = self.LoadData(os.path.join(os.getcwd(), 'asf', data[1]))
+			if min(asfrawdata[1:-1,0]-asfrawdata[0:-2,0])<0:
+				print "Warning! Energies in ", data[1], "are not in ascending order!"
+			cb.asfdata = dict([['E',asfrawdata[:,0]], ['Re',scipy.interpolate.splrep(asfrawdata[:,0],asfrawdata[:,1],k=1)], ['Im',scipy.interpolate.splrep(asfrawdata[:,0],asfrawdata[:,2],k=1)]])
+			
+			if None not in datalist:
+				#add spare box
+				self.add_element()
+				self.Layout()
+				if self.MaterialBox.GetSize()[1] < self.MaterialBox.CalcMin()[1]:
+					self.Fit()
+		self.calc_asfdata()
+		
+	
+	def BL_to_ASF(self,E,coeffs,Atomic_mass):
+		"""Biggs and Lighthill offers photoelectric cross-section with the sum of AnE^-n for n=1-4 {E in keV and PECS in cm^2/g}.
+		   Henke scattering factors related by f2 = PECS*E/(2*r0*h*c)  {E in eV and PECS in cm^2/atom}."""
+		return (coeffs[0] + coeffs[1]/(E*0.001) + coeffs[2]/((E*0.001)**2) + coeffs[3]/((E*0.001)**3))*Atomic_mass/(2*Avogadro_constant*classical_electron_radius*Plancks_constant*speed_of_light)*0.1
+
+	def parse_BL_file(self):
+		continue_norm = True # Normalise the Biggs and Lighthill data as the published scattering factors do, rather than as Henke et al says.
+		BLfile = {}
+		for line in open('original_biggs_file.dat'):
+			try:
+				values = [float(f) for f in line.split()]
+				if values[3] > 10:
+					Norm_value = 0 #will calculate actual normalisation value later
+					if not continue_norm and values[2] > 10 and values[2] not in [20, 100, 500, 100000]:
+						Norm_value = 1
+					elif not continue_norm and values[0] == 42 and values[2] > 10 and values[2] not in [100, 500, 100000]:#Mo needs special handling
+						#print "Mo seen at", values[0], values[2]
+						Norm_value = 1
+					values.append(Norm_value)
+					if values[2] not in [0.01, 0.1, 0.8, 4, 20, 100, 500, 100000] or (values[0] == 42 and values[2] == 20):
+						values.append(1)#this is an absorption edge!
+					else:
+						values.append(0)#this is not an absorption edge
+					BLfile[int(values[0])].append(values)
+			except ValueError:
+				pass
+			except IndexError:
+				pass
+			except KeyError:
+				BLfile[int(values[0])] = [values]
+		for elem,coeffs in BLfile.items():
+			BLfile[elem] = numpy.array(coeffs)[:,2:]
+		self.BL_file = BLfile
+
+	
+	def add_element(self):
+		"""add element GUI items"""
+		#make GUI objects
+		element_ComboBox = wx.ComboBox(self, -1, value='', style=wx.CB_READONLY)
+		self.populate_elements(element_ComboBox)
+		element_Text = wx.TextCtrl(self, -1, '', style=wx.TE_PROCESS_ENTER)
+		#put into a sizer
+		ElementSizer = wx.BoxSizer(wx.HORIZONTAL)
+		ElementSizer.contents = (element_ComboBox,element_Text)
+		ElementSizer.Add(element_ComboBox, 1)#, wx.Grow)
+		ElementSizer.Add(element_Text, 1)#, wx.Grow)
+#		print "Insert in materialsbox at:", max(1,len(self.MaterialBox.GetChildren())-1)
+		self.MaterialBox.Insert(max(2,len(self.MaterialBox.GetChildren())-1),ElementSizer, 0, wx.GROW)
+		#various bookkeeping
+		element_ComboBox.Bind(wx.EVT_COMBOBOX, self.select_element)
+#		element_Text.Bind(wx.EVT_TEXT, self.element_Text_check)
+		element_Text.Bind(wx.EVT_KILL_FOCUS, self.element_Text_check)
+		element_Text.Bind(wx.EVT_TEXT_ENTER, self.element_Text_check)
+		self.MaterialBox.contents.append([ElementSizer,element_ComboBox,element_Text])
+#		print "there are now", len(self.MaterialBox.GetChildren())-1, "element boxes"
+
+	def Splice_Text_check(self,evt):
+		self.combine_data()
+		self.plot_data()
+		
+		
+	def MergeAdd_check(self,evt):
+		self.combine_data()
+		self.plot_data()
+		
+		
+	def element_Text_check(self,evt):
+		tb = evt.GetEventObject()
+		num_value = None
+		try:
+			num_value = float(tb.GetValue())
+		except ValueError:
+			print "'", tb.GetValue(), "' is not a number!"
+		if num_value != None and numpy.isfinite(num_value):
+			if num_value < 0:
+				print tb.GetValue(), " is not a positive number!"
+			else:
+				print "Execute with", num_value
+				self.calc_asfdata()
+		
+
+	def populate_elements(self,cb):
+		"""Append elements"""
+		cb.Append('')
+		for element in self.Elements:
+			cb.Append(element[1],[element[0],element[4],element[3]])
+
+
+	def calc_asfdata(self):
+		"""Calculate atomic scattering factors"""
+		print "Calculate total asf data"
+		#start from clean slate
+		self.total_asf_Re=None
+		self.total_asf_Im=None
+		#get element list
+		self.stoichiometry = []
+		self.Z = []
+		self.MolecularFormula = ""
+		self.MolecularMass = 0
+		asfdatalist = []
+		self.BLcoeffs = []
+		for i in range(len(self.MaterialBox.contents)-1):
+			try: #sanitise inputs
+				self.stoichiometry.append(float(self.MaterialBox.contents[i][2].GetValue()))
+				self.Z.append(int(self.MaterialBox.contents[i][1].GetClientData(self.MaterialBox.contents[i][1].GetSelection())[0])) #Need Z for relativistic correction
+				asfdatalist.append(self.MaterialBox.contents[i][1].asfdata)
+				self.BLcoeffs.append(self.BL_file[self.Z[-1]])
+				#Construct molecular formula for savefile header
+				num = self.stoichiometry[-1]
+				if num==round(num):num=int(num)
+				if num!=0:
+				  self.MolecularFormula = self.MolecularFormula+self.MaterialBox.contents[i][1].GetValue()+str(num)
+				  self.MolecularMass = self.MolecularMass+num*float(self.MaterialBox.contents[i][1].GetClientData(self.MaterialBox.contents[i][1].GetSelection())[2])
+			except ValueError:
+				pass
+		if len(self.stoichiometry)!=0:
+			#get unique energy points
+			temp_E=numpy.array([])
+			for set in asfdatalist:
+				temp_E = numpy.concatenate((temp_E,set['E']))
+			temp_E = numpy.unique(temp_E)
+			#add weighted asf data sets
+			self.total_asf = numpy.zeros((len(temp_E),3))
+			self.total_asf[:,0] = temp_E
+			for i in range(len(asfdatalist)):
+				self.total_asf[:,1] = self.total_asf[:,1]+self.stoichiometry[i]*scipy.interpolate.splev(temp_E,asfdatalist[i]['Re'],der=0)
+				self.total_asf[:,2] = self.total_asf[:,2]+self.stoichiometry[i]*scipy.interpolate.splev(temp_E,asfdatalist[i]['Im'],der=0)
+			#normalise and combine Biggs and Lighthill coefficients
+			temp_E = []
+			for i,z in enumerate(self.Z):
+				#get normalisation values
+				ASF_norm = scipy.interpolate.splev(10000,asfdatalist[i]['Im'],der=0)
+				BL_norm = self.BL_to_ASF(10000,self.BLcoeffs[i][0][3:7],float(self.Elements[z-1][3]))
+				for line in self.BLcoeffs[-i]:
+					temp_E.append(line[0])
+					if not line[7]:
+						line[7] = BL_norm/ASF_norm
+						line[3:7] = line[3:7]/line[7]
+			temp_E = numpy.unique(temp_E)
+			temp_E = numpy.insert(temp_E[temp_E.searchsorted(30):],0,30)# Select set of energy ranges to use in extending beyond 30 keV
+			self.BL_coefficients = []
+			for i in range(len(temp_E)-1):
+				coeff_list = [0,0,0,0,0]
+				for n, elem in enumerate(self.BLcoeffs):
+					for line in elem:
+						if line[0]<=temp_E[i] and line[1]>=temp_E[i+1]:
+							coeff_list = coeff_list+line[2:7]*self.stoichiometry[n]
+				#convert from Biggs and Lighthill units to scattering factors
+				coeff_list = coeff_list*[0,1,1000,1000000,1000000000]*float(self.Elements[self.Z[n]-1][3])/(2*Avogadro_constant*classical_electron_radius*Plancks_constant*speed_of_light)*0.1
+				self.BL_coefficients.append(coeff_list)
+			#store for use in calculation
+			self.BL_coefficients = numpy.array(self.BL_coefficients)
+			self.BL_range = temp_E*1000
+		#resplice with raw nexafs data, if any is loaded
+		self.combine_data()
+		#plot asf data
+		self.plot_data()
+		
+	
+
+
+
+	def calculate(self,button):
+		"""Calculate Button"""
+		print "Calculate button"
+		if self.merged_Im is not None:
+			tic=time.time()
+			if self.FFT_AlgorithmRadio.GetValue():
+				self.KK_FFT()
+			else:
+				#self.KK_PP()
+				self.KK_PP_BL()
+			print "Completed in ", round(time.time()-tic,3), "seconds."
+			self.plot_data()
+
+
+	def KK_Relativistic_Correction(self):
+		"""Calculate the relativistic correction to the Kramers-Kronig transform"""
+		Relativistic_Correction = 0
+		if self.total_asf is not None:
+			for i in xrange(len(self.Z)):#Z and stoichiometry come from calc_asfdata()
+				Relativistic_Correction = Relativistic_Correction + (self.Z[i]-(self.Z[i]/82.5)**2.37)*self.stoichiometry[i]
+		return Relativistic_Correction
+
+	def KK_FFT(self):
+		"""Calculate Kramers-Kronig transform with FFT algorithm"""
+		print "Calculate Kramers-Kronig transform (FFT)"
+		E_step = self.merged_Im[1:-1,0]-self.merged_Im[0:-2,0]
+		FFT_step = min(E_step)/2
+###		FFT_step = 0.02 ###############################################(coz my 'puter's slow) testing Hack! ! ! ! ! !
+		even_E = numpy.arange(0,self.merged_Im[-1,0],FFT_step)
+		N_E = len(even_E)
+		N_pow2 = 2**math.ceil(math.log(N_E,2))
+		print "Use step size of ", FFT_step, " eV (",N_E,"+",N_pow2-N_E," points)"
+		print "Interpolate (Part 1/4)"
+		even_Im = numpy.interp(even_E,self.merged_Im[:,0],self.merged_Im[:,1], left=0, right=0)
+		del even_E #maximise available memory, we can recalculate even_E when needed.
+		print "First FFT (Part 2/4)"
+		temp_wave = 2/math.pi*scipy.fftpack.fft(even_Im, n=2*N_pow2).imag
+#		temp_wave = 2/math.pi*numpy.fft.fft(even_Im, n=2*N_pow2).imag #numpy fft is very slow
+		del even_Im
+		temp_wave[N_pow2:-1] = -temp_wave[N_pow2:-1]
+		print "Second FFT (Part 3/4)"
+		temp_wave = scipy.fftpack.ifft(temp_wave)
+#		temp_wave = numpy.fft.ifft(temp_wave) #numpy fft is very slow
+		temp_wave = temp_wave[0:N_E]
+		temp_wave = math.pi*temp_wave.real+self.KK_Relativistic_Correction()
+		print "Reinterpolate (Part 4/4)"
+		even_E = numpy.arange(0,self.merged_Im[-1,0],FFT_step)
+		self.KK_Re = numpy.interp(self.merged_Im[:,0],even_E,temp_wave)
+#		self.KK_Re_FFT = self.KK_Re
+		print "Done!"
+		
+		
+	def KK_PP(self):
+		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm"""
+		print "Calculate Kramers-Kronig transform (PP)"
+		len_E = len(self.merged_Im[:,0])
+		X1 = self.merged_Im[0:-1,0]
+		X2 = self.merged_Im[1:,0]
+		Y1 = self.merged_Im[0:-1,1]
+		Y2 = self.merged_Im[1:,1]
+		M = (Y2-Y1)/(X2-X1)
+		E = numpy.tile(self.merged_Im[:,0],(len_E-1,1)).T
+		#Find areas between data points, assuming linear interpolation of Im data
+		Symb_1 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1-E)*(X2-X1))+E*(Y1-M*(X1-E))*numpy.log(numpy.absolute((X2-E)/(X1-E)))
+		Symb_2 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1+E)*(X2-X1))-E*(Y1-M*(X1+E))*numpy.log(numpy.absolute((X2+E)/(X1+E)))
+		Symb_1[~numpy.isfinite(Symb_1)]=0#Ignore singularities for now
+		Symb_A = numpy.sum(Symb_2-Symb_1,axis=1)#Sum areas for approximate integral
+		del X1, X2, Y1, Y2, M, E, Symb_1, Symb_2
+		#Patch singularities by integrating across two intervals at once, avoiding evaluation at the singularity.
+		#Note we will not calculate this at the end-points and assume it is zero (due to symmetry)
+		X1 = self.merged_Im[0:-2,0]
+		XE = self.merged_Im[1:-1,0]
+		X2 = self.merged_Im[2:,0]
+		Y1 = self.merged_Im[0:-2,1]
+		YE = self.merged_Im[1:-1,1]
+		Y2 = self.merged_Im[2:,1]
+		M1 = (YE-Y1)/(XE-X1)
+		M2 = (Y2-YE)/(X2-XE)
+		Symb_singularities = numpy.zeros(len_E)
+		Symb_singularities[1:-1] = 0.5*M2*(X2**2-XE**2)-0.5*M1*(X1**2-XE**2)+YE*((X2-X1)+XE*numpy.log(numpy.absolute((X2-XE)/(X1-XE))))
+		# Finish things off
+		self.KK_Re = (Symb_A-Symb_singularities)/(math.pi*self.merged_Im[:,0])+self.KK_Relativistic_Correction()
+#		self.KK_Re_PP = self.KK_Re
+
+
+	def Coeffs_to_ASF(self,E,coeffs):
+		"""Calculate Henke scattering factors from polynomial coefficients. {E in eV and PECS in cm^2/atom}."""
+		return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
+
+	def KK_PP_BL(self):
+		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm plus the Biggs and Lighthill extended data"""
+		print "Calculate Kramers-Kronig transform (PP) plus BL data"
+		len_E = len(self.merged_Im[:,0])
+		M = (self.merged_Im[1:,1]-self.merged_Im[0:-1,1])/(self.merged_Im[1:,0]-self.merged_Im[0:-1,0])
+		B = self.merged_Im[0:-1,1]-M*self.merged_Im[0:-1,0]
+		E = self.merged_Im[:,0]
+		Full_coeffs = numpy.zeros((len_E-1,5))
+		Full_coeffs[:,0] = M
+		Full_coeffs[:,1] = B
+		#B&L extension
+		C = self.BL_coefficients
+		X = self.BL_range
+		E = E[0:-1]
+		for i in range(len(X)-1):
+			Y1 = self.Coeffs_to_ASF(X[i]-0.2,Full_coeffs[-1,:])
+			Y2 = self.Coeffs_to_ASF(X[i]+0.2,C[i,:])
+			M = (Y2-Y1)/0.4
+			B = Y1-M*(X[i]-0.2)
+			E = numpy.append(E,[X[i]-0.2,X[i]+0.2])
+			Full_coeffs = numpy.append(Full_coeffs,[[M,B,0,0,0]],axis=0)
+			Full_coeffs = numpy.append(Full_coeffs,[C[i,:]],axis=0)
+		E = numpy.append(E,X[-1])
+		X1 = E[0:-1]
+		X2 = E[1:]
+		E = numpy.tile(E,(len(E)-1,1)).T
+		Full_coeffs = Full_coeffs.T
+		Ident = numpy.identity(len(E))#Use this to annul illegal operations
+		temp = (1-(Ident[:,1:]+Ident[:,0:-1]))
+		Symb_1 = (1-(Ident[:,1:]+Ident[:,0:-1]))*(( Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2+Full_coeffs[1,:]*E+Full_coeffs[2,:]+Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:,1:])/(X1-E+Ident[:,0:-1])))-(Full_coeffs[3,:]/E+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4,:]/E*(X2**-1-X1**-1))
+		Symb_2 =                                  (-Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2-Full_coeffs[1,:]*E+Full_coeffs[2,:]-Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3,:]/E-Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4,:]/E*(X2**-1-X1**-1)
+		Symb_B = numpy.sum(Symb_2-Symb_1,axis=1)#Sum areas for approximate integral
+		#Patch singularities
+		X1 = E[0:-2,0]
+		XE = E[1:-1,0]
+		X2 = E[2:,0]
+		C1 = Full_coeffs[:,0:-1]
+		C2 = Full_coeffs[:,1:]
+		Symb_singularities = numpy.zeros(len(E))
+		Symb_singularities[1:-1] = (C2[0,:]*XE**2+C2[1,:]*XE+C2[2,:]+C2[3,:]*XE**-1+C2[4,:]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0,:]*XE+C2[1,:])*(X2-XE)+0.5*C2[0,:]*(X2**2-XE**2)-(C2[3,:]*XE**-1+C2[4,:]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4,:]*XE**-1*(X2**-2-XE**-2)
+		Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0,:]*XE+C1[1,:])*(XE-X1)+0.5*C1[0,:]*(XE**2-X1**2)-(C1[3,:]*XE**-1+C1[4,:]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4,:]*XE**-1*(XE**-2-X1**-2)
+		# Finish things off
+		cut = 2*(len(self.BL_range)-1) #remove calculated values at energies higher than 30 keV
+		self.KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut])/(math.pi*E[:-cut,0])+self.KK_Relativistic_Correction()
+
+
+app = wx.PySimpleApp()
+f = MyFrame()
+app.MainLoop() 
