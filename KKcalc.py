@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import wx, os
-import wx.lib.plot as plot
-from wx.lib.fancytext import StaticFancyText
-import scipy, scipy.io, scipy.interpolate, scipy.fftpack#, scipy.integrate
-import numpy
-import math
 
+from wx.lib.fancytext import StaticFancyText
+import math
+import numpy
+import os
+import scipy
+import scipy.fftpack
+import scipy.interpolate
+import scipy.io
 import time #only for profiling
+import wx
+import wx.lib.plot as plot
+
 
 classical_electron_radius = 2.81794029957951365441605230194258e-15# meters
 Plancks_constant = 4.1356673310e-15 # eV*seconds
