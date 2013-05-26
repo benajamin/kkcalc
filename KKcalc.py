@@ -259,7 +259,7 @@ class MyFrame(wx.Frame):
 		#self.Test()
 	
 	def Test(self):
-		""" Convenience function for repetitive testing """
+		"""Convenience function for repetitive testing"""
 		self.filename="NC-Xy_norm_bgsub.txt"
 		self.dirname="data"
 		self.FileText.SetLabel("File: "+self.filename)
@@ -280,7 +280,7 @@ class MyFrame(wx.Frame):
 	def OnExit(self,e):
 		self.Close(True)  # Close the frame.
 	def OnOpen(self,e):
-		""" Load data from a file"""
+		"""Load data from a file."""
 		success = False
 		if wx.version() in ['2.8.12.1 (gtk2-unicode)','2.8.12.1 (gtk2)']:#Add buggy WX versions to this list!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			print 'use Tk work-around'
@@ -336,7 +336,7 @@ class MyFrame(wx.Frame):
 
 
 	def OnSave(self,e):
-		""" Write data to file"""
+		"""Write data to file."""
 		print "Save"
 		f = SaveFrame(self)
 		print "done!"
@@ -355,7 +355,7 @@ class MyFrame(wx.Frame):
 			print "Nothing to save."
 
 	def LoadData(self,filename):
-		""" Read a standard ascii file and return a list of lists of floats"""
+		"""Read a standard ASCII file and return a list of lists of floats."""
 		data = []
 		if os.path.isfile(filename):
 			for line in open(filename):
@@ -373,7 +373,7 @@ class MyFrame(wx.Frame):
 			return data
 		
 	def combine_data(self):
-		"""Extend NEXAFS data with Henke data"""
+		"""Extend NEXAFS data with Henke data."""
 		if self.raw_file is not None:
 			print "Convert to scattering factors"
 			raw_Im = self.ConvertData(self.raw_file)
@@ -462,7 +462,7 @@ class MyFrame(wx.Frame):
 		
 		
 	def plot_data(self):
-		"""Plot data"""
+		"""Plot data."""
 		print "plotting data"
 		#List of things to plot
 		plotlist_Im = []
@@ -535,7 +535,7 @@ class MyFrame(wx.Frame):
 		
 
 	def select_element(self,evt):
-		"""Select an element"""
+		"""Select an element."""
 		cb = evt.GetEventObject()
 		data = cb.GetClientData(evt.GetSelection())
 		print "data =", data
@@ -586,8 +586,15 @@ class MyFrame(wx.Frame):
 		
 	
 	def BL_to_ASF(self,E,coeffs,Atomic_mass):
-		"""Biggs and Lighthill offers photoelectric cross-section with the sum of AnE^-n for n=1-4 {E in keV and PECS in cm^2/g}.
-		   Henke scattering factors related by f2 = PECS*E/(2*r0*h*c)  {E in eV and PECS in cm^2/atom}."""
+		"""Convert Biggs and Lighthill to ASF.
+		
+		Biggs and Lighthill offers photoelectric cross-section with the
+		sum of AnE^-n for n=1-4  {E in keV and PECS in cm^2/g}.
+
+		Henke scattering factors related by
+		f2 = PECS*E/(2*r0*h*c)  {E in eV and PECS in cm^2/atom}.
+		
+		"""
 		return (coeffs[0] + coeffs[1]/(E*0.001) + coeffs[2]/((E*0.001)**2) + coeffs[3]/((E*0.001)**3))*Atomic_mass/(2*AVOGADRO_CONSTANT*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*0.1
 
 	def parse_BL_file(self):
@@ -621,7 +628,7 @@ class MyFrame(wx.Frame):
 
 	
 	def add_element(self):
-		"""add element GUI items"""
+		"""Add element GUI items."""
 		#make GUI objects
 		element_ComboBox = wx.ComboBox(self, -1, value='', style=wx.CB_READONLY)
 		self.populate_elements(element_ComboBox)
@@ -667,14 +674,14 @@ class MyFrame(wx.Frame):
 		
 
 	def populate_elements(self,cb):
-		"""Append elements"""
+		"""Append elements."""
 		cb.Append('')
 		for element in self.Elements:
 			cb.Append(element[1],[element[0],element[4],element[3]])
 
 
 	def calc_asfdata(self):
-		"""Calculate atomic scattering factors"""
+		"""Calculate atomic scattering factors."""
 		print "Calculate total asf data"
 		#start from clean slate
 		self.total_asf_Re=None
@@ -748,7 +755,7 @@ class MyFrame(wx.Frame):
 
 
 	def calculate(self,button):
-		"""Calculate Button"""
+		"""Calculate Button."""
 		print "Calculate button"
 		if self.merged_Im is not None:
 			tic=time.time()
@@ -762,7 +769,10 @@ class MyFrame(wx.Frame):
 
 
 	def KK_Relativistic_Correction(self):
-		"""Calculate the relativistic correction to the Kramers-Kronig transform"""
+		"""Calculate the relativistic correction to the
+		Kramers-Kronig transform.
+		
+		"""
 		Relativistic_Correction = 0
 		if self.total_asf is not None:
 			for i in xrange(len(self.Z)):#Z and stoichiometry come from calc_asfdata()
@@ -770,7 +780,7 @@ class MyFrame(wx.Frame):
 		return Relativistic_Correction
 
 	def KK_FFT(self):
-		"""Calculate Kramers-Kronig transform with FFT algorithm"""
+		"""Calculate Kramers-Kronig transform with FFT algorithm."""
 		print "Calculate Kramers-Kronig transform (FFT)"
 		E_step = self.merged_Im[1:-1,0]-self.merged_Im[0:-2,0]
 		FFT_step = min(E_step)/2
@@ -800,7 +810,10 @@ class MyFrame(wx.Frame):
 		
 		
 	def KK_PP(self):
-		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm"""
+		"""Calculate Kramers-Kronig transform with
+		"Piecewise Polynomial" algorithm.
+		
+		"""
 		print "Calculate Kramers-Kronig transform (PP)"
 		len_E = len(self.merged_Im[:,0])
 		X1 = self.merged_Im[0:-1,0]
@@ -833,11 +846,18 @@ class MyFrame(wx.Frame):
 
 
 	def Coeffs_to_ASF(self,E,coeffs):
-		"""Calculate Henke scattering factors from polynomial coefficients. {E in eV and PECS in cm^2/atom}."""
+		"""Calculate Henke scattering factors from polynomial coefficients.
+		
+		{E in eV and PECS in cm^2/atom}.
+		
+		"""
 		return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
 
 	def KK_PP_BL(self):
-		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm plus the Biggs and Lighthill extended data"""
+		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
+		algorithm plus the Biggs and Lighthill extended data.
+		
+		"""
 		print "Calculate Kramers-Kronig transform (PP) plus BL data"
 		len_E = len(self.merged_Im[:,0])
 		M = (self.merged_Im[1:,1]-self.merged_Im[0:-1,1])/(self.merged_Im[1:,0]-self.merged_Im[0:-1,0])
