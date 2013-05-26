@@ -15,10 +15,12 @@ import wx
 import wx.lib.plot as plot
 
 
-classical_electron_radius = 2.81794029957951365441605230194258e-15# meters
-Plancks_constant = 4.1356673310e-15 # eV*seconds
-speed_of_light = 2.99792458e8 # meters per second
-Avogadro_constant = 6.02214129e23
+
+# Constants
+CLASSICAL_ELECTRON_RADIUS = 2.81794029957951365441605230194258e-15 # meters
+PLANCKS_CONSTANT = 4.1356673310e-15 # eV*seconds
+SPEED_OF_LIGHT = 2.99792458e8 # meters per second
+AVOGADRO_CONSTANT = 6.02214129e23 # no unit
 
 
 class SaveFrame(wx.Frame):
@@ -318,12 +320,12 @@ class MyFrame(wx.Frame):
 			if data_type==1:#Beta
 				print "Convert from Beta (type=", data_type, ") to Scattering Factors."
 				density = float(self.DensityText.GetValue())
-				raw_Im[:,1] = density*Avogadro_constant*2*numpy.pi*raw_data[:,0]**2*raw_data[:,1]/(self.MolecularMass*classical_electron_radius*(Plancks_constant*speed_of_light)**2)
+				raw_Im[:,1] = density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:,0]**2*raw_data[:,1]/(self.MolecularMass*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)
 			elif data_type==2:#Scattering factor
 				print "Data is already in terms of Scattering Factors (type=", data_type, ")."
 			else:#(data_type== 0 or -1) Assume Photoabsorption data
 				print "Convert NEXAFS photoabsorption data to Scattering Factors."
-				raw_Im[:,1] = raw_data[:,0]*raw_data[:,1]/(2*classical_electron_radius*Plancks_constant*speed_of_light)
+				raw_Im[:,1] = raw_data[:,0]*raw_data[:,1]/(2*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)
 			return raw_Im
 		
 
@@ -586,7 +588,7 @@ class MyFrame(wx.Frame):
 	def BL_to_ASF(self,E,coeffs,Atomic_mass):
 		"""Biggs and Lighthill offers photoelectric cross-section with the sum of AnE^-n for n=1-4 {E in keV and PECS in cm^2/g}.
 		   Henke scattering factors related by f2 = PECS*E/(2*r0*h*c)  {E in eV and PECS in cm^2/atom}."""
-		return (coeffs[0] + coeffs[1]/(E*0.001) + coeffs[2]/((E*0.001)**2) + coeffs[3]/((E*0.001)**3))*Atomic_mass/(2*Avogadro_constant*classical_electron_radius*Plancks_constant*speed_of_light)*0.1
+		return (coeffs[0] + coeffs[1]/(E*0.001) + coeffs[2]/((E*0.001)**2) + coeffs[3]/((E*0.001)**3))*Atomic_mass/(2*AVOGADRO_CONSTANT*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*0.1
 
 	def parse_BL_file(self):
 		continue_norm = True # Normalise the Biggs and Lighthill data as the published scattering factors do, rather than as Henke et al says.
@@ -731,7 +733,7 @@ class MyFrame(wx.Frame):
 						if line[0]<=temp_E[i] and line[1]>=temp_E[i+1]:
 							coeff_list = coeff_list+line[2:7]*self.stoichiometry[n]
 				#convert from Biggs and Lighthill units to scattering factors
-				coeff_list = coeff_list*[0,1,1000,1000000,1000000000]*float(self.Elements[self.Z[n]-1][3])/(2*Avogadro_constant*classical_electron_radius*Plancks_constant*speed_of_light)*0.1
+				coeff_list = coeff_list*[0,1,1000,1000000,1000000000]*float(self.Elements[self.Z[n]-1][3])/(2*AVOGADRO_CONSTANT*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*0.1
 				self.BL_coefficients.append(coeff_list)
 			#store for use in calculation
 			self.BL_coefficients = numpy.array(self.BL_coefficients)
