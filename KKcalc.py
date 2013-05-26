@@ -873,7 +873,7 @@ class MyFrame(wx.Frame):
 		cut = 2*(len(self.BL_range)-1) #remove calculated values at energies higher than 30 keV
 		self.KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut])/(math.pi*E[:-cut,0])+self.KK_Relativistic_Correction()
 
-
-app = wx.PySimpleApp()
-f = MyFrame()
-app.MainLoop() 
+if __name__ == '__main__':
+	app = wx.PySimpleApp()
+	f = MyFrame()
+	app.MainLoop() 
