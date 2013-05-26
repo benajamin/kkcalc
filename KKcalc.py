@@ -121,6 +121,8 @@ class SaveFrame(wx.Frame):
 
 class MyFrame(wx.Frame):
 	def __init__(self):
+		wx.Frame.__init__(self, None, wx.ID_ANY, "Kramers-Kronig Calculator", size=(500, 800))
+
 		#Initialise variables
 		self.dirname=''
 		self.raw_file=None
@@ -133,7 +135,6 @@ class MyFrame(wx.Frame):
 		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]# Get data about elements
 		self.parse_BL_file()# Get Biggs and Lighthill data
 		
-		wx.Frame.__init__(self, None, wx.ID_ANY, "Kramers-Kronig Calculator", size=(500, 800))
 		# Setting up the menus.
 		filemenu= wx.Menu()
 		filemenu.Append(wx.ID_OPEN, "L&oad"," Load photoabsorption data from file")
@@ -872,6 +873,7 @@ class MyFrame(wx.Frame):
 		# Finish things off
 		cut = 2*(len(self.BL_range)-1) #remove calculated values at energies higher than 30 keV
 		self.KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut])/(math.pi*E[:-cut,0])+self.KK_Relativistic_Correction()
+
 
 if __name__ == '__main__':
 	app = wx.PySimpleApp()
