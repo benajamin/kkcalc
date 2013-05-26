@@ -10,17 +10,17 @@ import scipy
 import scipy.fftpack
 import scipy.interpolate
 import scipy.io
-import time #only for profiling
+import time  # only for profiling
 import wx
 import wx.lib.plot as plot
 
 
 
 # Constants
-CLASSICAL_ELECTRON_RADIUS = 2.81794029957951365441605230194258e-15 # meters
-PLANCKS_CONSTANT = 4.1356673310e-15 # eV*seconds
-SPEED_OF_LIGHT = 2.99792458e8 # meters per second
-AVOGADRO_CONSTANT = 6.02214129e23 # no unit
+CLASSICAL_ELECTRON_RADIUS = 2.81794029957951365441605230194258e-15  # meters
+PLANCKS_CONSTANT = 4.1356673310e-15  # eV*seconds
+SPEED_OF_LIGHT = 2.99792458e8  # meters per second
+AVOGADRO_CONSTANT = 6.02214129e23  # no unit
 
 
 class SaveFrame(wx.Frame):
@@ -97,7 +97,7 @@ class SaveFrame(wx.Frame):
 		SaveButton.Bind(wx.EVT_BUTTON, self.Save)
 		SizerV.Add(SaveButton,0,wx.CENTER)
 
-		self.SetSizer(SizerV)			   #add outer sizer to frame
+		self.SetSizer(SizerV)			   # add outer sizer to frame
 		self.Fit()
 		
 		self.Show(True)
@@ -114,15 +114,15 @@ class SaveFrame(wx.Frame):
 				print "'", self.DensityText.GetValue(), "' is not a number!"
 			if num_value is not None:
 			  print "can safely save"
-		#Get values
+		# Get values
 		
-		#Convert values
+		# Convert values
 		
 		self.Close(True)  # Close the frame.
 		
-		#choose filename
+		# choose filename
 		
-		#write data
+		# write data
 		
 		
 
@@ -130,7 +130,7 @@ class MyFrame(wx.Frame):
 	def __init__(self):
 		wx.Frame.__init__(self, None, wx.ID_ANY, "Kramers-Kronig Calculator", size=(500, 800))
 
-		#Initialise variables
+		# Initialise variables
 		self.dirname=''
 		self.raw_file=None
 		self.total_asf=None
@@ -139,8 +139,9 @@ class MyFrame(wx.Frame):
 		self.KK_Re=None
 		self.MolecularMass = 1
 		self.asf_bg=None
-		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]# Get data about elements
-		self.parse_BL_file()# Get Biggs and Lighthill data
+		# Get data about elements
+		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]
+		self.parse_BL_file()  # Get Biggs and Lighthill data
 		
 		# Setting up the menus.
 		filemenu= wx.Menu()
@@ -155,8 +156,8 @@ class MyFrame(wx.Frame):
 		helpmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
 		# Creating the menubar.
 		menuBar = wx.MenuBar()
-		menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
-		menuBar.Append(helpmenu,"&Help") # Adding the "helpmenu" to the MenuBar
+		menuBar.Append(filemenu,"&File")  # Adding the "filemenu" to the MenuBar
+		menuBar.Append(helpmenu,"&Help")  # Adding the "helpmenu" to the MenuBar
 		self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
 		wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
 		wx.EVT_MENU(self, wx.ID_SAVE, self.OnSave)
@@ -165,9 +166,9 @@ class MyFrame(wx.Frame):
 		wx.EVT_MENU(self, wx.ID_HELP, self.OnHelp)
 		
 		
-		Sizer1 = wx.BoxSizer(wx.HORIZONTAL) #create outer sizer
-		SizerL = wx.BoxSizer(wx.VERTICAL)   #create left-hand sizer for controls
-		SizerR = wx.BoxSizer(wx.VERTICAL)   #create right-hand sizer for plots
+		Sizer1 = wx.BoxSizer(wx.HORIZONTAL)  # create outer sizer
+		SizerL = wx.BoxSizer(wx.VERTICAL)  # create left-hand sizer for controls
+		SizerR = wx.BoxSizer(wx.VERTICAL)  # create right-hand sizer for plots
 		############################Data box
 		DataBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Near-Edge Data"), wx.VERTICAL)
 		self.FileText = wx.StaticText(self, -1, "File: (None)")
@@ -193,16 +194,16 @@ class MyFrame(wx.Frame):
 		SpliceSizer.Add(self.SpliceText2, 1)
 		DataBox.Add(SpliceSizer, 1, wx.GROW)
 		
-		#Background_CloseSizer = wx.BoxSizer(wx.HORIZONTAL)
+		# Background_CloseSizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.AddBackgroundCheckBox = wx.CheckBox(self, -1, "Add background")
 		self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
 		DataBox.Add(self.AddBackgroundCheckBox, 0)
-		#Background_CloseSizer.Add(self.AddBackgroundCheckBox, 0)
-		#self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.MergeAdd_check)
-		#Background_CloseSizer.AddStretchSpacer(1)
-		#self.CloseFile = wx.Button(self, -1, "X", style= wx.BU_EXACTFIT)
-		#Background_CloseSizer.Add(self.CloseFile, 0)
-		#DataBox.Add(Background_CloseSizer, 1, wx.GROW)
+		# Background_CloseSizer.Add(self.AddBackgroundCheckBox, 0)
+		# self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.MergeAdd_check)
+		# Background_CloseSizer.AddStretchSpacer(1)
+		# self.CloseFile = wx.Button(self, -1, "X", style= wx.BU_EXACTFIT)
+		# Background_CloseSizer.Add(self.CloseFile, 0)
+		# DataBox.Add(Background_CloseSizer, 1, wx.GROW)
 		
 		############################Material box
 		self.MaterialBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Material"), wx.VERTICAL)
@@ -251,12 +252,12 @@ class MyFrame(wx.Frame):
 		Sizer1.Add(SizerL, 1, wx.GROW)
 		Sizer1.Add(SizerR, 3, wx.GROW)
 		self.SetAutoLayout(True)
-		self.SetSizer(Sizer1)			   #add outer sizer to frame
+		self.SetSizer(Sizer1)			   # add outer sizer to frame
 		self.Fit()
 		
 		self.Show(True)
 		self.plot_data()
-		#self.Test()
+		# self.Test()
 	
 	def Test(self):
 		"""Convenience function for repetitive testing"""
@@ -282,7 +283,7 @@ class MyFrame(wx.Frame):
 	def OnOpen(self,e):
 		"""Load data from a file."""
 		success = False
-		if wx.version() in ['2.8.12.1 (gtk2-unicode)','2.8.12.1 (gtk2)']:#Add buggy WX versions to this list!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		if wx.version() in ['2.8.12.1 (gtk2-unicode)','2.8.12.1 (gtk2)']:  # Add buggy WX versions to this list!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			print 'use Tk work-around'
 			import Tkinter
 			from tkFileDialog import askopenfilename
@@ -317,13 +318,13 @@ class MyFrame(wx.Frame):
 		if len(raw_data)!=0:
 			raw_Im = raw_data[:,:2].copy()
 			data_type = self.DataTypeCombo.GetSelection()
-			if data_type==1:#Beta
+			if data_type==1:  # Beta
 				print "Convert from Beta (type=", data_type, ") to Scattering Factors."
 				density = float(self.DensityText.GetValue())
 				raw_Im[:,1] = density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:,0]**2*raw_data[:,1]/(self.MolecularMass*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)
-			elif data_type==2:#Scattering factor
+			elif data_type==2:  # Scattering factor
 				print "Data is already in terms of Scattering Factors (type=", data_type, ")."
-			else:#(data_type== 0 or -1) Assume Photoabsorption data
+			else:  # (data_type== 0 or -1) Assume Photoabsorption data
 				print "Convert NEXAFS photoabsorption data to Scattering Factors."
 				raw_Im[:,1] = raw_data[:,0]*raw_data[:,1]/(2*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)
 			return raw_Im
@@ -347,8 +348,8 @@ class MyFrame(wx.Frame):
 				outfile.write('Scattering factors for '+self.MolecularFormula+'\n')
 				outfile.write('E(eV)\tf1\tf2\n')
 				for i in xrange(len(self.merged_Im[:,0])):
-	#				outfile.write("{0}\t{1}\t{2}\n".format(self.merged_Im[i,0],self.KK_Re[i],self.merged_Im[i,1]))#Python 3.0 style
-					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.merged_Im[i,0],'Re':self.KK_Re[i],'Im':self.merged_Im[i,1]})#old formatting style
+	#				outfile.write("{0}\t{1}\t{2}\n".format(self.merged_Im[i,0],self.KK_Re[i],self.merged_Im[i,1]))  # Python 3.0 style
+					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.merged_Im[i,0],'Re':self.KK_Re[i],'Im':self.merged_Im[i,1]})  # old formatting style
 				outfile.close()
 			print "Scattering factors for", self.MolecularFormula, "saved to ", fd.GetFilename()
 		else:
@@ -378,8 +379,8 @@ class MyFrame(wx.Frame):
 			print "Convert to scattering factors"
 			raw_Im = self.ConvertData(self.raw_file)
 		print "Combine Data"
-		#Get splice points
-		splice_eV = numpy.array([10,30000])#Henke limits
+		# Get splice points
+		splice_eV = numpy.array([10,30000])  # Henke limits
 		if self.SpliceText1.GetValue() == "Start":
 			if self.raw_file is not None:
 				splice_eV[0] = raw_Im[0,0]
@@ -396,21 +397,21 @@ class MyFrame(wx.Frame):
 			cut_boolean = (splice_eV[0]<raw_Im[:,0]) == (raw_Im[:,0]<splice_eV[1])
 			nexafs_cut = raw_Im[cut_boolean]
 			self.merged_Im = numpy.vstack(((splice_eV[0],splice_nexafs_Im[0]),nexafs_cut,(splice_eV[1],splice_nexafs_Im[1])))
-			#Extras for plotting
+			# Extras for plotting
 			self.splice_ind = (0,-1)
 			cut_boolean = (splice_eV[0]<=raw_Im[:,0]) != (raw_Im[:,0]<=splice_eV[1])
 			self.nexafs_CutOut = raw_Im[cut_boolean]
-			self.asf_bg = None #We won't be using this variable this time
+			self.asf_bg = None  # We won't be using this variable this time
 			
 		elif self.raw_file is None and self.total_asf is not None:
 			self.merged_Im = self.total_asf[:,[0,2]]
-			#Extras for plotting
+			# Extras for plotting
 			self.splice_ind = (0,-1)
 			self.nexafs_CutOut = None
-			self.asf_bg = None #We won't be using this variable this time
+			self.asf_bg = None  # We won't be using this variable this time
 			
 		elif self.raw_file is not None and self.total_asf is not None:
-			#get start and end Y values from nexafs and asf data
+			# get start and end Y values from nexafs and asf data
 			splice_nexafs_Im = numpy.interp(splice_eV,raw_Im[:,0],raw_Im[:,1])
 			splice_asf_Im = numpy.interp(splice_eV,self.total_asf[:,0],self.total_asf[:,2])
 			cut_boolean = (splice_eV[0]<raw_Im[:,0]) == (raw_Im[:,0]<splice_eV[1])
@@ -419,16 +420,16 @@ class MyFrame(wx.Frame):
 				print "Merge data sets"
 				scale = (splice_asf_Im[1]-splice_asf_Im[0])/(splice_nexafs_Im[1]-splice_nexafs_Im[0])
 				scaled_nexafs_Im = ((raw_Im[:,1]-splice_nexafs_Im[0])*scale)+splice_asf_Im[0]
-				self.asf_bg = None #We won't be using this variable this time
+				self.asf_bg = None  # We won't be using this variable this time
 			else:
 				print "Add data sets"
-				#Set up background function
-				#We trust this point to be just before the absorption edge
+				# Set up background function
+				# We trust this point to be just before the absorption edge
 				trusted_ind = max(0,numpy.where(self.total_asf[:,0]>splice_eV[0])[0][0]-1)
 				Log_total_asf = numpy.log(self.total_asf[:,2])
-				#Lets trust the 5 points before our trusted point and make an initial guess at the background function
+				# Lets trust the 5 points before our trusted point and make an initial guess at the background function
 				p = numpy.polyfit(self.total_asf[(trusted_ind-5):trusted_ind,0],Log_total_asf[(trusted_ind-5):trusted_ind],1)
-				#Now lets look for the points up util the absorption edge
+				# Now lets look for the points up util the absorption edge
 				p_vals = numpy.exp(numpy.polyval(p,self.total_asf[(trusted_ind-5):-1,0]))
 				p_err = max(p_vals[0:5]-self.total_asf[(trusted_ind-5):trusted_ind,2])
 				edge_ind = numpy.where(self.total_asf[trusted_ind:-1,2]-p_vals[4:-1]>p_err*10)
@@ -436,27 +437,27 @@ class MyFrame(wx.Frame):
 					edge_ind=edge_ind[0][0]
 				else:
 					edge_ind=trusted_ind
-				#Redo background using the 5 points before the background point
+				# Redo background using the 5 points before the background point
 				p = numpy.polyfit( self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind,0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind],1)
 				asf_bg = numpy.exp(numpy.polyval(p,raw_Im[:,0]))
 				print "Background defined as: y=exp(%(p1)ex %(p0)+e)" % {"p1":p[1], "p0":p[0]}
-				#Apply background function
+				# Apply background function
 				scale = (splice_asf_Im[1]-numpy.exp(numpy.polyval(p,splice_eV[1])))/splice_nexafs_Im[1]
 				scaled_nexafs_Im = raw_Im[:,1]*scale+asf_bg
-				#store background data for plotting
+				# store background data for plotting
 				cut_boolean_wide = numpy.roll(cut_boolean,-1) + numpy.roll(cut_boolean,1)
 				self.asf_bg = [[trusted_ind+edge_ind-5,trusted_ind+edge_ind], numpy.vstack((raw_Im[cut_boolean_wide,0],asf_bg[cut_boolean_wide])).T]
 			
 			nexafs_cut = numpy.vstack((raw_Im[cut_boolean,0],scaled_nexafs_Im[cut_boolean])).T
-			#merge data sets together
+			# merge data sets together
 			asf_cut_high = self.total_asf[self.total_asf[:,0]>splice_eV[1],:]
 			asf_cut_low = self.total_asf[self.total_asf[:,0]<splice_eV[0],:]
 			self.merged_Im = numpy.vstack((asf_cut_low[:,[0,2]],(splice_eV[0],splice_asf_Im[0]),nexafs_cut,(splice_eV[1],splice_asf_Im[1]),asf_cut_high[:,[0,2]]))
-			#Extras for plotting
+			# Extras for plotting
 			self.splice_ind = (len(asf_cut_low[:,0]),-len(asf_cut_high[:,0]))
 			cut_boolean = (splice_eV[0]<=raw_Im[:,0]) != (raw_Im[:,0]<=splice_eV[1])
 			self.nexafs_CutOut = numpy.vstack((raw_Im[cut_boolean,0],scaled_nexafs_Im[cut_boolean])).T
-		#Previous calculation of f_1 is no longer matching displayed f_2 data
+		# Previous calculation of f_1 is no longer matching displayed f_2 data
 		self.KK_Re = None
 				
 		
@@ -464,7 +465,7 @@ class MyFrame(wx.Frame):
 	def plot_data(self):
 		"""Plot data."""
 		print "plotting data"
-		#List of things to plot
+		# List of things to plot
 		plotlist_Im = []
 		plotlist_Re = []
 		# get initial guess at X limits
@@ -486,7 +487,7 @@ class MyFrame(wx.Frame):
 			# get Y limits
 			Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
 			Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
-			plotlist_Im.append(plot.PolyLine(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],:], colour='blue', width=1))#User data
+			plotlist_Im.append(plot.PolyLine(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],:], colour='blue', width=1))  # User data
 			if len(self.nexafs_CutOut)!=0:
 				plotlist_Im.append(plot.PolyMarker(self.nexafs_CutOut, colour='blue', marker='cross', size=1))
 			if self.asf_bg is not None:
@@ -499,8 +500,8 @@ class MyFrame(wx.Frame):
 				# get Y limits
 				Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
 				Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1],1])
-				plotlist_Im.append(plot.PolyLine(self.merged_Im[0:(self.splice_ind[0]+1),:], colour='black', width=1))#Low energy Henke data
-				plotlist_Im.append(plot.PolyLine(self.merged_Im[(self.splice_ind[1]-1):-1,:], colour='black', width=1))#High energy Henke data
+				plotlist_Im.append(plot.PolyLine(self.merged_Im[0:(self.splice_ind[0]+1),:], colour='black', width=1))  # Low energy Henke data
+				plotlist_Im.append(plot.PolyLine(self.merged_Im[(self.splice_ind[1]-1):-1,:], colour='black', width=1))  # High energy Henke data
 			else:
 				print "plot asf data only"
 				Y_Im_max = max(self.total_asf[(X_min<=self.total_asf[:,0])==(self.total_asf[:,0]<=X_max),2])
@@ -518,7 +519,7 @@ class MyFrame(wx.Frame):
 			Y_Re_min = min(Y_Re_min,min(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
 			plotlist_Re.append(plot.PolyLine(numpy.vstack((self.merged_Im[:,0],self.KK_Re)).T, colour='green', width=1))
 		
-		#Expand plotting limits for prettiness
+		# Expand plotting limits for prettiness
 		window_width = X_max-X_min
 		X_max = min(X_max+window_width*0.1,30000)
 		X_min = max(X_min-window_width*0.1,0)
@@ -547,27 +548,27 @@ class MyFrame(wx.Frame):
 			if box[1]==cb:
 				N=n
 			n=n+1
-		try: #check corresponding textctrl and put in a 1 if empty
+		try:  # check corresponding textctrl and put in a 1 if empty
 			num_value = float(self.MaterialBox.contents[N][2].GetValue())
 		except ValueError:
 			self.MaterialBox.contents[N][2].SetValue("1")
 		
-		if data == None: #might need to remove a box
+		if data == None:  # might need to remove a box
 			if None in datalist and datalist.index(None) != len(datalist)-1:
-				#remove extra boxes
+				# remove extra boxes
 				dead_box = datalist.index(None)
-				#Remove and destroy combobox
+				# Remove and destroy combobox
 #				self.MaterialBox.contents[dead_box][0].Clear(True)
 				self.MaterialBox.contents[dead_box][0].Detach(0)
 				self.MaterialBox.contents[dead_box][1].Destroy()
-				#Remove and destroy textbox
+				# Remove and destroy textbox
 				self.MaterialBox.contents[dead_box][0].Detach(0)
 				self.MaterialBox.contents[dead_box][2].Destroy()
-				#Remove (no need to destroy) ElementSizer
+				# Remove (no need to destroy) ElementSizer
 				self.MaterialBox.Remove(dead_box+2)
-				#delete reference to items in saved list
+				# delete reference to items in saved list
 				self.MaterialBox.contents.remove(self.MaterialBox.contents[dead_box])
-				#adjust GUI layout
+				# adjust GUI layout
 				self.Layout()
 		else:
 			print "Load nff data from:", os.path.join(os.getcwd(), 'asf', data[1])
@@ -577,7 +578,7 @@ class MyFrame(wx.Frame):
 			cb.asfdata = dict([['E',asfrawdata[:,0]], ['Re',scipy.interpolate.splrep(asfrawdata[:,0],asfrawdata[:,1],k=1)], ['Im',scipy.interpolate.splrep(asfrawdata[:,0],asfrawdata[:,2],k=1)]])
 			
 			if None not in datalist:
-				#add spare box
+				# add spare box
 				self.add_element()
 				self.Layout()
 				if self.MaterialBox.GetSize()[1] < self.MaterialBox.CalcMin()[1]:
@@ -604,17 +605,17 @@ class MyFrame(wx.Frame):
 			try:
 				values = [float(f) for f in line.split()]
 				if values[3] > 10:
-					Norm_value = 0 #will calculate actual normalisation value later
+					Norm_value = 0  # will calculate actual normalisation value later
 					if not continue_norm and values[2] > 10 and values[2] not in [20, 100, 500, 100000]:
 						Norm_value = 1
-					elif not continue_norm and values[0] == 42 and values[2] > 10 and values[2] not in [100, 500, 100000]:#Mo needs special handling
-						#print "Mo seen at", values[0], values[2]
+					elif not continue_norm and values[0] == 42 and values[2] > 10 and values[2] not in [100, 500, 100000]:  # Mo needs special handling
+						# print "Mo seen at", values[0], values[2]
 						Norm_value = 1
 					values.append(Norm_value)
 					if values[2] not in [0.01, 0.1, 0.8, 4, 20, 100, 500, 100000] or (values[0] == 42 and values[2] == 20):
-						values.append(1)#this is an absorption edge!
+						values.append(1)  # this is an absorption edge!
 					else:
-						values.append(0)#this is not an absorption edge
+						values.append(0)  # this is not an absorption edge
 					BLfile[int(values[0])].append(values)
 			except ValueError:
 				pass
@@ -629,18 +630,18 @@ class MyFrame(wx.Frame):
 	
 	def add_element(self):
 		"""Add element GUI items."""
-		#make GUI objects
+		# make GUI objects
 		element_ComboBox = wx.ComboBox(self, -1, value='', style=wx.CB_READONLY)
 		self.populate_elements(element_ComboBox)
 		element_Text = wx.TextCtrl(self, -1, '', style=wx.TE_PROCESS_ENTER)
-		#put into a sizer
+		# put into a sizer
 		ElementSizer = wx.BoxSizer(wx.HORIZONTAL)
 		ElementSizer.contents = (element_ComboBox,element_Text)
 		ElementSizer.Add(element_ComboBox, 1)#, wx.Grow)
 		ElementSizer.Add(element_Text, 1)#, wx.Grow)
 #		print "Insert in materialsbox at:", max(1,len(self.MaterialBox.GetChildren())-1)
 		self.MaterialBox.Insert(max(2,len(self.MaterialBox.GetChildren())-1),ElementSizer, 0, wx.GROW)
-		#various bookkeeping
+		# various bookkeeping
 		element_ComboBox.Bind(wx.EVT_COMBOBOX, self.select_element)
 #		element_Text.Bind(wx.EVT_TEXT, self.element_Text_check)
 		element_Text.Bind(wx.EVT_KILL_FOCUS, self.element_Text_check)
@@ -683,10 +684,10 @@ class MyFrame(wx.Frame):
 	def calc_asfdata(self):
 		"""Calculate atomic scattering factors."""
 		print "Calculate total asf data"
-		#start from clean slate
+		# start from clean slate
 		self.total_asf_Re=None
 		self.total_asf_Im=None
-		#get element list
+		# get element list
 		self.stoichiometry = []
 		self.Z = []
 		self.MolecularFormula = ""
@@ -694,12 +695,12 @@ class MyFrame(wx.Frame):
 		asfdatalist = []
 		self.BLcoeffs = []
 		for i in range(len(self.MaterialBox.contents)-1):
-			try: #sanitise inputs
+			try:  # sanitise inputs
 				self.stoichiometry.append(float(self.MaterialBox.contents[i][2].GetValue()))
-				self.Z.append(int(self.MaterialBox.contents[i][1].GetClientData(self.MaterialBox.contents[i][1].GetSelection())[0])) #Need Z for relativistic correction
+				self.Z.append(int(self.MaterialBox.contents[i][1].GetClientData(self.MaterialBox.contents[i][1].GetSelection())[0]))  # Need Z for relativistic correction
 				asfdatalist.append(self.MaterialBox.contents[i][1].asfdata)
 				self.BLcoeffs.append(self.BL_file[self.Z[-1]])
-				#Construct molecular formula for savefile header
+				# Construct molecular formula for savefile header
 				num = self.stoichiometry[-1]
 				if num==round(num):num=int(num)
 				if num!=0:
@@ -708,21 +709,21 @@ class MyFrame(wx.Frame):
 			except ValueError:
 				pass
 		if len(self.stoichiometry)!=0:
-			#get unique energy points
+			# get unique energy points
 			temp_E=numpy.array([])
 			for set in asfdatalist:
 				temp_E = numpy.concatenate((temp_E,set['E']))
 			temp_E = numpy.unique(temp_E)
-			#add weighted asf data sets
+			# add weighted asf data sets
 			self.total_asf = numpy.zeros((len(temp_E),3))
 			self.total_asf[:,0] = temp_E
 			for i in range(len(asfdatalist)):
 				self.total_asf[:,1] = self.total_asf[:,1]+self.stoichiometry[i]*scipy.interpolate.splev(temp_E,asfdatalist[i]['Re'],der=0)
 				self.total_asf[:,2] = self.total_asf[:,2]+self.stoichiometry[i]*scipy.interpolate.splev(temp_E,asfdatalist[i]['Im'],der=0)
-			#normalise and combine Biggs and Lighthill coefficients
+			# normalise and combine Biggs and Lighthill coefficients
 			temp_E = []
 			for i,z in enumerate(self.Z):
-				#get normalisation values
+				# get normalisation values
 				ASF_norm = scipy.interpolate.splev(10000,asfdatalist[i]['Im'],der=0)
 				BL_norm = self.BL_to_ASF(10000,self.BLcoeffs[i][0][3:7],float(self.Elements[z-1][3]))
 				for line in self.BLcoeffs[-i]:
@@ -739,15 +740,15 @@ class MyFrame(wx.Frame):
 					for line in elem:
 						if line[0]<=temp_E[i] and line[1]>=temp_E[i+1]:
 							coeff_list = coeff_list+line[2:7]*self.stoichiometry[n]
-				#convert from Biggs and Lighthill units to scattering factors
+				# convert from Biggs and Lighthill units to scattering factors
 				coeff_list = coeff_list*[0,1,1000,1000000,1000000000]*float(self.Elements[self.Z[n]-1][3])/(2*AVOGADRO_CONSTANT*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*0.1
 				self.BL_coefficients.append(coeff_list)
-			#store for use in calculation
+			# store for use in calculation
 			self.BL_coefficients = numpy.array(self.BL_coefficients)
 			self.BL_range = temp_E*1000
-		#resplice with raw nexafs data, if any is loaded
+		# resplice with raw nexafs data, if any is loaded
 		self.combine_data()
-		#plot asf data
+		# plot asf data
 		self.plot_data()
 		
 	
@@ -762,7 +763,7 @@ class MyFrame(wx.Frame):
 			if self.FFT_AlgorithmRadio.GetValue():
 				self.KK_FFT()
 			else:
-				#self.KK_PP()
+				# self.KK_PP()
 				self.KK_PP_BL()
 			print "Completed in ", round(time.time()-tic,3), "seconds."
 			self.plot_data()
@@ -775,7 +776,7 @@ class MyFrame(wx.Frame):
 		"""
 		Relativistic_Correction = 0
 		if self.total_asf is not None:
-			for i in xrange(len(self.Z)):#Z and stoichiometry come from calc_asfdata()
+			for i in xrange(len(self.Z)):  # Z and stoichiometry come from calc_asfdata()
 				Relativistic_Correction = Relativistic_Correction + (self.Z[i]-(self.Z[i]/82.5)**2.37)*self.stoichiometry[i]
 		return Relativistic_Correction
 
@@ -791,15 +792,15 @@ class MyFrame(wx.Frame):
 		print "Use step size of ", FFT_step, " eV (",N_E,"+",N_pow2-N_E," points)"
 		print "Interpolate (Part 1/4)"
 		even_Im = numpy.interp(even_E,self.merged_Im[:,0],self.merged_Im[:,1], left=0, right=0)
-		del even_E #maximise available memory, we can recalculate even_E when needed.
+		del even_E  # maximise available memory, we can recalculate even_E when needed.
 		print "First FFT (Part 2/4)"
 		temp_wave = 2/math.pi*scipy.fftpack.fft(even_Im, n=2*N_pow2).imag
-#		temp_wave = 2/math.pi*numpy.fft.fft(even_Im, n=2*N_pow2).imag #numpy fft is very slow
+#		temp_wave = 2/math.pi*numpy.fft.fft(even_Im, n=2*N_pow2).imag  # numpy fft is very slow
 		del even_Im
 		temp_wave[N_pow2:-1] = -temp_wave[N_pow2:-1]
 		print "Second FFT (Part 3/4)"
 		temp_wave = scipy.fftpack.ifft(temp_wave)
-#		temp_wave = numpy.fft.ifft(temp_wave) #numpy fft is very slow
+#		temp_wave = numpy.fft.ifft(temp_wave)  # numpy fft is very slow
 		temp_wave = temp_wave[0:N_E]
 		temp_wave = math.pi*temp_wave.real+self.KK_Relativistic_Correction()
 		print "Reinterpolate (Part 4/4)"
@@ -822,14 +823,14 @@ class MyFrame(wx.Frame):
 		Y2 = self.merged_Im[1:,1]
 		M = (Y2-Y1)/(X2-X1)
 		E = numpy.tile(self.merged_Im[:,0],(len_E-1,1)).T
-		#Find areas between data points, assuming linear interpolation of Im data
+		# Find areas between data points, assuming linear interpolation of Im data
 		Symb_1 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1-E)*(X2-X1))+E*(Y1-M*(X1-E))*numpy.log(numpy.absolute((X2-E)/(X1-E)))
 		Symb_2 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1+E)*(X2-X1))-E*(Y1-M*(X1+E))*numpy.log(numpy.absolute((X2+E)/(X1+E)))
-		Symb_1[~numpy.isfinite(Symb_1)]=0#Ignore singularities for now
-		Symb_A = numpy.sum(Symb_2-Symb_1,axis=1)#Sum areas for approximate integral
+		Symb_1[~numpy.isfinite(Symb_1)]=0  # Ignore singularities for now
+		Symb_A = numpy.sum(Symb_2-Symb_1,axis=1)  # Sum areas for approximate integral
 		del X1, X2, Y1, Y2, M, E, Symb_1, Symb_2
-		#Patch singularities by integrating across two intervals at once, avoiding evaluation at the singularity.
-		#Note we will not calculate this at the end-points and assume it is zero (due to symmetry)
+		# Patch singularities by integrating across two intervals at once, avoiding evaluation at the singularity.
+		# Note we will not calculate this at the end-points and assume it is zero (due to symmetry)
 		X1 = self.merged_Im[0:-2,0]
 		XE = self.merged_Im[1:-1,0]
 		X2 = self.merged_Im[2:,0]
@@ -866,7 +867,7 @@ class MyFrame(wx.Frame):
 		Full_coeffs = numpy.zeros((len_E-1,5))
 		Full_coeffs[:,0] = M
 		Full_coeffs[:,1] = B
-		#B&L extension
+		# B&L extension
 		C = self.BL_coefficients
 		X = self.BL_range
 		E = E[0:-1]
@@ -883,12 +884,12 @@ class MyFrame(wx.Frame):
 		X2 = E[1:]
 		E = numpy.tile(E,(len(E)-1,1)).T
 		Full_coeffs = Full_coeffs.T
-		Ident = numpy.identity(len(E))#Use this to annul illegal operations
+		Ident = numpy.identity(len(E))  # Use this to annul illegal operations
 		temp = (1-(Ident[:,1:]+Ident[:,0:-1]))
 		Symb_1 = (1-(Ident[:,1:]+Ident[:,0:-1]))*(( Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2+Full_coeffs[1,:]*E+Full_coeffs[2,:]+Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:,1:])/(X1-E+Ident[:,0:-1])))-(Full_coeffs[3,:]/E+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4,:]/E*(X2**-1-X1**-1))
 		Symb_2 =                                  (-Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2-Full_coeffs[1,:]*E+Full_coeffs[2,:]-Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3,:]/E-Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4,:]/E*(X2**-1-X1**-1)
-		Symb_B = numpy.sum(Symb_2-Symb_1,axis=1)#Sum areas for approximate integral
-		#Patch singularities
+		Symb_B = numpy.sum(Symb_2-Symb_1,axis=1)  # Sum areas for approximate integral
+		# Patch singularities
 		X1 = E[0:-2,0]
 		XE = E[1:-1,0]
 		X2 = E[2:,0]
@@ -898,7 +899,7 @@ class MyFrame(wx.Frame):
 		Symb_singularities[1:-1] = (C2[0,:]*XE**2+C2[1,:]*XE+C2[2,:]+C2[3,:]*XE**-1+C2[4,:]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0,:]*XE+C2[1,:])*(X2-XE)+0.5*C2[0,:]*(X2**2-XE**2)-(C2[3,:]*XE**-1+C2[4,:]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4,:]*XE**-1*(X2**-2-XE**-2)
 		Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0,:]*XE+C1[1,:])*(XE-X1)+0.5*C1[0,:]*(XE**2-X1**2)-(C1[3,:]*XE**-1+C1[4,:]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4,:]*XE**-1*(XE**-2-X1**-2)
 		# Finish things off
-		cut = 2*(len(self.BL_range)-1) #remove calculated values at energies higher than 30 keV
+		cut = 2*(len(self.BL_range)-1)  # remove calculated values at energies higher than 30 keV
 		self.KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut])/(math.pi*E[:-cut,0])+self.KK_Relativistic_Correction()
 
 
