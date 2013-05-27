@@ -133,26 +133,26 @@ class MyFrame(wx.Frame):
 		wx.Frame.__init__(self, None, wx.ID_ANY, "Kramers-Kronig Calculator", size=(500, 800))
 
 		# Initialise variables
-		self.dirname=''
-		self.raw_file=None
-		self.total_asf=None
-		self.merged_Im=None
-		self.nexafs_CutOut=[]
-		self.KK_Re=None
+		self.dirname = ''
+		self.raw_file = None
+		self.total_asf = None
+		self.merged_Im = None
+		self.nexafs_CutOut = []
+		self.KK_Re = None
 		self.MolecularMass = 1
-		self.asf_bg=None
+		self.asf_bg = None
 		# Get data about elements
 		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]
 		self.parse_BL_file()  # Get Biggs and Lighthill data
 
 		# Setting up the menus.
-		filemenu= wx.Menu()
+		filemenu = wx.Menu()
 		filemenu.Append(wx.ID_OPEN, "L&oad", " Load photoabsorption data from file")
 		filemenu.AppendSeparator()
 		filemenu.Append(wx.ID_SAVE, "&Save", " Export results to file")
 		filemenu.AppendSeparator()
 		filemenu.Append(wx.ID_EXIT, "E&xit", " Terminate the program")
-		helpmenu= wx.Menu()
+		helpmenu = wx.Menu()
 		helpmenu.Append(wx.ID_HELP, "&Help", " How to use this program")
 		helpmenu.AppendSeparator()
 		helpmenu.Append(wx.ID_ABOUT, "&About", " Information about this program")
@@ -263,8 +263,8 @@ class MyFrame(wx.Frame):
 
 	def Test(self):
 		"""Convenience function for repetitive testing"""
-		self.filename="NC-Xy_norm_bgsub.txt"
-		self.dirname="data"
+		self.filename = "NC-Xy_norm_bgsub.txt"
+		self.dirname = "data"
 		self.FileText.SetLabel("File: "+self.filename)
 		self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
 		self.AddBackgroundCheckBox.SetValue(True)
@@ -276,7 +276,7 @@ class MyFrame(wx.Frame):
 
 
 	def OnAbout(self, e):
-		d= wx.MessageDialog(self, " A utility for calculating the real part of soft X-ray spectra.\nWritten by Dr. Benjamin Watts at the Paul Scherrer Institut", "About KKcalc", wx.OK)
+		d = wx.MessageDialog(self, " A utility for calculating the real part of soft X-ray spectra.\nWritten by Dr. Benjamin Watts at the Paul Scherrer Institut", "About KKcalc", wx.OK)
 		# Create a message dialog box
 		d.ShowModal() # Shows it
 		d.Destroy() # finally destroy it when finished.
@@ -303,8 +303,8 @@ class MyFrame(wx.Frame):
 			dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.OPEN)
 			if dlg.ShowModal() == wx.ID_OK:
 				success = True
-				self.filename=dlg.GetFilename()
-				self.dirname=dlg.GetDirectory()
+				self.filename = dlg.GetFilename()
+				self.dirname = dlg.GetDirectory()
 				if not os.path.exists(os.path.join(self.dirname, self.filename)):
 					print 'Did you choose a file in '+self.dirname+'? This might be a known bug in WX. The current WX version number is:'
 					print wx.version()
@@ -436,9 +436,9 @@ class MyFrame(wx.Frame):
 				p_err = max(p_vals[0:5]-self.total_asf[(trusted_ind-5):trusted_ind, 2])
 				edge_ind = numpy.where(self.total_asf[trusted_ind:-1, 2]-p_vals[4:-1]>p_err*10)
 				if len(edge_ind[0])!=0:
-					edge_ind=edge_ind[0][0]
+					edge_ind = edge_ind[0][0]
 				else:
-					edge_ind=trusted_ind
+					edge_ind = trusted_ind
 				# Redo background using the 5 points before the background point
 				p = numpy.polyfit(self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind, 0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind], 1)
 				asf_bg = numpy.exp(numpy.polyval(p, raw_Im[:, 0]))
@@ -539,13 +539,13 @@ class MyFrame(wx.Frame):
 		data = cb.GetClientData(evt.GetSelection())
 		print "data =", data
 		datalist = []
-		n=0
-		N=None
+		n = 0
+		N = None
 		for box in self.MaterialBox.contents:
 			datalist.append(box[1].GetClientData(box[1].GetSelection()))
 			if box[1]==cb:
-				N=n
-			n=n+1
+				N = n
+			n = n+1
 		try:  # check corresponding textctrl and put in a 1 if empty
 			num_value = float(self.MaterialBox.contents[N][2].GetValue())
 		except ValueError:
@@ -677,8 +677,8 @@ class MyFrame(wx.Frame):
 		"""Calculate atomic scattering factors."""
 		print "Calculate total asf data"
 		# start from clean slate
-		self.total_asf_Re=None
-		self.total_asf_Im=None
+		self.total_asf_Re = None
+		self.total_asf_Im = None
 		# get element list
 		self.stoichiometry = []
 		self.Z = []
@@ -702,7 +702,7 @@ class MyFrame(wx.Frame):
 				pass
 		if len(self.stoichiometry)!=0:
 			# get unique energy points
-			temp_E=numpy.array([])
+			temp_E = numpy.array([])
 			for set in asfdatalist:
 				temp_E = numpy.concatenate((temp_E, set['E']))
 			temp_E = numpy.unique(temp_E)
@@ -747,7 +747,7 @@ class MyFrame(wx.Frame):
 		"""Calculate Button."""
 		print "Calculate button"
 		if self.merged_Im is not None:
-			tic=time.time()
+			tic = time.time()
 			if self.FFT_AlgorithmRadio.GetValue():
 				self.KK_FFT()
 			else:
@@ -812,7 +812,7 @@ class MyFrame(wx.Frame):
 		# Find areas between data points, assuming linear interpolation of Im data
 		Symb_1 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1-E)*(X2-X1))+E*(Y1-M*(X1-E))*numpy.log(numpy.absolute((X2-E)/(X1-E)))
 		Symb_2 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1+E)*(X2-X1))-E*(Y1-M*(X1+E))*numpy.log(numpy.absolute((X2+E)/(X1+E)))
-		Symb_1[~numpy.isfinite(Symb_1)]=0  # Ignore singularities for now
+		Symb_1[~numpy.isfinite(Symb_1)] = 0  # Ignore singularities for now
 		Symb_A = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
 		del X1, X2, Y1, Y2, M, E, Symb_1, Symb_2
 		# Patch singularities by integrating across two intervals at once, avoiding evaluation at the singularity.
@@ -872,7 +872,7 @@ class MyFrame(wx.Frame):
 		Ident = numpy.identity(len(E))  # Use this to annul illegal operations
 		temp = (1-(Ident[:, 1:]+Ident[:, 0:-1]))
 		Symb_1 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*((Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
-		Symb_2 =                                  (-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1)
+		Symb_2 =                                   (-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1)
 		Symb_B = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
 		# Patch singularities
 		X1 = E[0:-2, 0]
