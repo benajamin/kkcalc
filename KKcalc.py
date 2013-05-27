@@ -29,7 +29,7 @@ class SaveFrame(wx.Frame):
 		print Parent.MolecularFormula, Parent.MolecularMass
 		wx.Frame.__init__(self, None, wx.ID_ANY, "Export Data", size=(500, 800))
 		SizerV = wx.BoxSizer(wx.VERTICAL)
-		MetadataBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Metadata"), wx.VERTICAL)
+		MetadataBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Metadata"), wx.VERTICAL)
 		SizerV.Add(MetadataBox,3,wx.GROW)
 
 		SizerH0 = wx.BoxSizer(wx.HORIZONTAL)
@@ -87,7 +87,7 @@ class SaveFrame(wx.Frame):
 		SizerH9.Add(wx.StaticText(self, -1, "(\xb0)".decode('ISO8859-1')))
 		MetadataBox.Add(SizerH9,0,wx.GROW)
 
-		FormatBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Format"), wx.VERTICAL)
+		FormatBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Format"), wx.VERTICAL)
 		FormatBox.Add(wx.RadioButton(self, -1, "Scattering Factor", style=wx.RB_GROUP))
 		self.CRIRadio = wx.RadioButton(self, -1, "Complex Refractive Index")
 		FormatBox.Add(self.CRIRadio)
@@ -172,7 +172,7 @@ class MyFrame(wx.Frame):
 		SizerL = wx.BoxSizer(wx.VERTICAL)  # create left-hand sizer for controls
 		SizerR = wx.BoxSizer(wx.VERTICAL)  # create right-hand sizer for plots
 		############################Data box
-		DataBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Near-Edge Data"), wx.VERTICAL)
+		DataBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Near-Edge Data"), wx.VERTICAL)
 		self.FileText = wx.StaticText(self, -1, "File: (None)")
 		DataBox.Add(self.FileText, 1, wx.GROW)
 		DataTypeLabel = wx.StaticText(self, -1, "Data Type: ")
@@ -208,7 +208,7 @@ class MyFrame(wx.Frame):
 		# DataBox.Add(Background_CloseSizer, 1, wx.GROW)
 
 		############################Material box
-		self.MaterialBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Material"), wx.VERTICAL)
+		self.MaterialBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Material"), wx.VERTICAL)
 		DensitySizer = wx.BoxSizer(wx.HORIZONTAL)
 		DensitySizer.Add(wx.StaticText(self, -1, "Density: "))
 		self.DensityText = wx.TextCtrl(self, -1, "1", style=wx.TE_PROCESS_ENTER)
@@ -223,7 +223,7 @@ class MyFrame(wx.Frame):
 		self.MaterialBox.AddStretchSpacer(1)
 
 		############################Calc box
-		CalcBox = wx.StaticBoxSizer(wx.StaticBox( self, label="Calculation"), wx.VERTICAL)
+		CalcBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Calculation"), wx.VERTICAL)
 		self.PP_AlgorithmRadio = wx.RadioButton(self, -1, "Piecewise-polynomial", style=wx.RB_GROUP)
 		self.FFT_AlgorithmRadio = wx.RadioButton(self, -1, "FFT-based")
 		CalcBox.Add(self.PP_AlgorithmRadio, 1, wx.GROW)
@@ -276,7 +276,7 @@ class MyFrame(wx.Frame):
 
 
 	def OnAbout(self,e):
-		d= wx.MessageDialog( self, " A utility for calculating the real part of soft X-ray spectra.\nWritten by Dr. Benjamin Watts at the Paul Scherrer Institut","About KKcalc", wx.OK)
+		d= wx.MessageDialog(self, " A utility for calculating the real part of soft X-ray spectra.\nWritten by Dr. Benjamin Watts at the Paul Scherrer Institut","About KKcalc", wx.OK)
 		# Create a message dialog box
 		d.ShowModal() # Shows it
 		d.Destroy() # finally destroy it when finished.
@@ -440,7 +440,7 @@ class MyFrame(wx.Frame):
 				else:
 					edge_ind=trusted_ind
 				# Redo background using the 5 points before the background point
-				p = numpy.polyfit( self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind,0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind],1)
+				p = numpy.polyfit(self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind,0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind],1)
 				asf_bg = numpy.exp(numpy.polyval(p,raw_Im[:,0]))
 				print "Background defined as: y=exp(%(p1)ex %(p0)+e)" % {"p1":p[1], "p0":p[0]}
 				# Apply background function
@@ -871,7 +871,7 @@ class MyFrame(wx.Frame):
 		Full_coeffs = Full_coeffs.T
 		Ident = numpy.identity(len(E))  # Use this to annul illegal operations
 		temp = (1-(Ident[:,1:]+Ident[:,0:-1]))
-		Symb_1 = (1-(Ident[:,1:]+Ident[:,0:-1]))*(( Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2+Full_coeffs[1,:]*E+Full_coeffs[2,:]+Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:,1:])/(X1-E+Ident[:,0:-1])))-(Full_coeffs[3,:]/E+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4,:]/E*(X2**-1-X1**-1))
+		Symb_1 = (1-(Ident[:,1:]+Ident[:,0:-1]))*((Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2+Full_coeffs[1,:]*E+Full_coeffs[2,:]+Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:,1:])/(X1-E+Ident[:,0:-1])))-(Full_coeffs[3,:]/E+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4,:]/E*(X2**-1-X1**-1))
 		Symb_2 =                                  (-Full_coeffs[0,:]*E+Full_coeffs[1,:])*(X2-X1)+0.5*Full_coeffs[0,:]*(X2**2-X1**2)+(Full_coeffs[0,:]*E**2-Full_coeffs[1,:]*E+Full_coeffs[2,:]-Full_coeffs[3,:]*E**-1+Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3,:]/E-Full_coeffs[4,:]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4,:]/E*(X2**-1-X1**-1)
 		Symb_B = numpy.sum(Symb_2-Symb_1,axis=1)  # Sum areas for approximate integral
 		# Patch singularities
