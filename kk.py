@@ -150,8 +150,7 @@ def KK_PP(merged_Im, Z, stoichiometry):
 	Symb_singularities = numpy.zeros(len_E)
 	Symb_singularities[1:-1] = 0.5*M2*(X2**2-XE**2)-0.5*M1*(X1**2-XE**2)+YE*((X2-X1)+XE*numpy.log(numpy.absolute((X2-XE)/(X1-XE))))
 	# Finish things off
-	KK_Re = (Symb_A - Symb_singularities) / (math.pi * merged_Im[:, 0])
-			+ relativistic_correction(Z, stoichiometry)
+	KK_Re = (Symb_A - Symb_singularities) / (math.pi * merged_Im[:, 0]) + relativistic_correction(Z, stoichiometry)
 	logger.debug("Done!")
 	return KK_Re
 
@@ -181,8 +180,7 @@ def KK_PP_BL(merged_Im, Z, stoichiometry, BL_coefficients, BL_range):
 	logger = logging.getLogger(__name__)
 	logger.info("Calculate Kramers-Kronig transform (PP) plus BL data")
 	len_E = len(merged_Im[:, 0])
-	M = (merged_Im[1:, 1] - merged_Im[0:-1, 1]) /
-		(merged_Im[1:, 0] - merged_Im[0:-1, 0])
+	M = (merged_Im[1:, 1] - merged_Im[0:-1, 1]) / (merged_Im[1:, 0] - merged_Im[0:-1, 0])
 	B = merged_Im[0:-1, 1] - M*merged_Im[0:-1, 0]
 	E = merged_Im[:, 0]
 	Full_coeffs = numpy.zeros((len_E-1, 5))
@@ -221,7 +219,6 @@ def KK_PP_BL(merged_Im, Z, stoichiometry, BL_coefficients, BL_range):
 	Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
 	# Finish things off
 	cut = 2 * (len(BL_range) - 1)  # remove calculated values at energies higher than 30 keV
-	KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut]) / (math.pi*E[:-cut, 0])
-			+ relativistic_correction()
+	KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut]) / (math.pi*E[:-cut, 0]) + relativistic_correction()
 	logger.debug("Done!")
 	return KK_Re
