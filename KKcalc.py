@@ -14,6 +14,7 @@ import time  # only for profiling
 import wx
 import wx.lib.plot as plot
 
+import kk
 
 
 # Constants
@@ -512,7 +513,8 @@ class MyFrame(wx.Frame):
 			# Real axes
 			total_asf_CUT = (X_min<=self.total_asf[:, 0])==(self.total_asf[:, 0]<=X_max)
 			Y_Re_max = max(self.total_asf[total_asf_CUT, 1])
-			Y_Re_min = min(self.total_asf[total_asf_CUT & (self.total_asf[:, 1]>-100*self.KK_Relativistic_Correction()), 1])
+			rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
+			Y_Re_min = min(self.total_asf[total_asf_CUT & (self.total_asf[:, 1]>-100*rel_corr), 1])
 			plotlist_Re.append(plot.PolyLine(self.total_asf[:, [0, 1]], colour='black', width=1))
 		if self.KK_Re is not None:
 			Y_Re_max = max(Y_Re_max, max(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
@@ -756,44 +758,11 @@ class MyFrame(wx.Frame):
 			print "Completed in ", round(time.time()-tic, 3), "seconds."
 			self.plot_data()
 
-	def KK_Relativistic_Correction(self):
-		"""Calculate the relativistic correction to the
-		Kramers-Kronig transform.
-
-		"""
-		Relativistic_Correction = 0
-		if self.total_asf is not None:
-			for i in xrange(len(self.Z)):  # Z and stoichiometry come from calc_asfdata()
-				Relativistic_Correction = Relativistic_Correction + (self.Z[i]-(self.Z[i]/82.5)**2.37)*self.stoichiometry[i]
-		return Relativistic_Correction
-
 	def KK_FFT(self):
 		"""Calculate Kramers-Kronig transform with FFT algorithm."""
 		print "Calculate Kramers-Kronig transform (FFT)"
-		E_step = self.merged_Im[1:-1, 0]-self.merged_Im[0:-2, 0]
-		FFT_step = min(E_step)/2
-###		FFT_step = 0.02 ###############################################(coz my 'puter's slow) testing Hack! ! ! ! ! !
-		even_E = numpy.arange(0, self.merged_Im[-1, 0], FFT_step)
-		N_E = len(even_E)
-		N_pow2 = 2**math.ceil(math.log(N_E, 2))
-		print "Use step size of ", FFT_step, " eV (", N_E, "+", N_pow2-N_E, " points)"
-		print "Interpolate (Part 1/4)"
-		even_Im = numpy.interp(even_E, self.merged_Im[:, 0], self.merged_Im[:, 1], left=0, right=0)
-		del even_E  # maximise available memory, we can recalculate even_E when needed.
-		print "First FFT (Part 2/4)"
-		temp_wave = 2/math.pi*scipy.fftpack.fft(even_Im, n=2*N_pow2).imag
-#		temp_wave = 2/math.pi*numpy.fft.fft(even_Im, n=2*N_pow2).imag  # numpy fft is very slow
-		del even_Im
-		temp_wave[N_pow2:-1] = -temp_wave[N_pow2:-1]
-		print "Second FFT (Part 3/4)"
-		temp_wave = scipy.fftpack.ifft(temp_wave)
-#		temp_wave = numpy.fft.ifft(temp_wave)  # numpy fft is very slow
-		temp_wave = temp_wave[0:N_E]
-		temp_wave = math.pi*temp_wave.real+self.KK_Relativistic_Correction()
-		print "Reinterpolate (Part 4/4)"
-		even_E = numpy.arange(0, self.merged_Im[-1, 0], FFT_step)
-		self.KK_Re = numpy.interp(self.merged_Im[:, 0], even_E, temp_wave)
-#		self.KK_Re_FFT = self.KK_Re
+		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
+		self.KK_Re = kk.KK_FFT(self.merged_Im, rel_corr)
 		print "Done!"
 
 	def KK_PP(self):
@@ -802,34 +771,9 @@ class MyFrame(wx.Frame):
 
 		"""
 		print "Calculate Kramers-Kronig transform (PP)"
-		len_E = len(self.merged_Im[:, 0])
-		X1 = self.merged_Im[0:-1, 0]
-		X2 = self.merged_Im[1:, 0]
-		Y1 = self.merged_Im[0:-1, 1]
-		Y2 = self.merged_Im[1:, 1]
-		M = (Y2-Y1)/(X2-X1)
-		E = numpy.tile(self.merged_Im[:, 0], (len_E-1, 1)).T
-		# Find areas between data points, assuming linear interpolation of Im data
-		Symb_1 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1-E)*(X2-X1))+E*(Y1-M*(X1-E))*numpy.log(numpy.absolute((X2-E)/(X1-E)))
-		Symb_2 = Y1*(X2-X1)+M*(0.5*(X2**2-X1**2)-(X1+E)*(X2-X1))-E*(Y1-M*(X1+E))*numpy.log(numpy.absolute((X2+E)/(X1+E)))
-		Symb_1[~numpy.isfinite(Symb_1)] = 0  # Ignore singularities for now
-		Symb_A = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
-		del X1, X2, Y1, Y2, M, E, Symb_1, Symb_2
-		# Patch singularities by integrating across two intervals at once, avoiding evaluation at the singularity.
-		# Note we will not calculate this at the end-points and assume it is zero (due to symmetry)
-		X1 = self.merged_Im[0:-2, 0]
-		XE = self.merged_Im[1:-1, 0]
-		X2 = self.merged_Im[2:, 0]
-		Y1 = self.merged_Im[0:-2, 1]
-		YE = self.merged_Im[1:-1, 1]
-		Y2 = self.merged_Im[2:, 1]
-		M1 = (YE-Y1)/(XE-X1)
-		M2 = (Y2-YE)/(X2-XE)
-		Symb_singularities = numpy.zeros(len_E)
-		Symb_singularities[1:-1] = 0.5*M2*(X2**2-XE**2)-0.5*M1*(X1**2-XE**2)+YE*((X2-X1)+XE*numpy.log(numpy.absolute((X2-XE)/(X1-XE))))
-		# Finish things off
-		self.KK_Re = (Symb_A-Symb_singularities)/(math.pi*self.merged_Im[:, 0])+self.KK_Relativistic_Correction()
-#		self.KK_Re_PP = self.KK_Re
+		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
+		self.KK_Re = kk.KK_PP(self.merged_Im, rel_corr)
+		print "Done!"
 
 	def Coeffs_to_ASF(self, E, coeffs):
 		"""Calculate Henke scattering factors from polynomial coefficients.
@@ -845,47 +789,10 @@ class MyFrame(wx.Frame):
 
 		"""
 		print "Calculate Kramers-Kronig transform (PP) plus BL data"
-		len_E = len(self.merged_Im[:, 0])
-		M = (self.merged_Im[1:, 1]-self.merged_Im[0:-1, 1])/(self.merged_Im[1:, 0]-self.merged_Im[0:-1, 0])
-		B = self.merged_Im[0:-1, 1]-M*self.merged_Im[0:-1, 0]
-		E = self.merged_Im[:, 0]
-		Full_coeffs = numpy.zeros((len_E-1, 5))
-		Full_coeffs[:, 0] = M
-		Full_coeffs[:, 1] = B
-		# B&L extension
-		C = self.BL_coefficients
-		X = self.BL_range
-		E = E[0:-1]
-		for i in range(len(X)-1):
-			Y1 = self.Coeffs_to_ASF(X[i]-0.2, Full_coeffs[-1, :])
-			Y2 = self.Coeffs_to_ASF(X[i]+0.2, C[i, :])
-			M = (Y2-Y1)/0.4
-			B = Y1-M*(X[i]-0.2)
-			E = numpy.append(E, [X[i]-0.2, X[i]+0.2])
-			Full_coeffs = numpy.append(Full_coeffs, [[M, B, 0, 0, 0]], axis=0)
-			Full_coeffs = numpy.append(Full_coeffs, [C[i, :]], axis=0)
-		E = numpy.append(E, X[-1])
-		X1 = E[0:-1]
-		X2 = E[1:]
-		E = numpy.tile(E, (len(E)-1, 1)).T
-		Full_coeffs = Full_coeffs.T
-		Ident = numpy.identity(len(E))  # Use this to annul illegal operations
-		temp = (1-(Ident[:, 1:]+Ident[:, 0:-1]))
-		Symb_1 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*((Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
-		Symb_2 =                                   (-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1)
-		Symb_B = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
-		# Patch singularities
-		X1 = E[0:-2, 0]
-		XE = E[1:-1, 0]
-		X2 = E[2:, 0]
-		C1 = Full_coeffs[:, 0:-1]
-		C2 = Full_coeffs[:, 1:]
-		Symb_singularities = numpy.zeros(len(E))
-		Symb_singularities[1:-1] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0, :]*XE+C2[1, :])*(X2-XE)+0.5*C2[0, :]*(X2**2-XE**2)-(C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4, :]*XE**-1*(X2**-2-XE**-2)
-		Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
-		# Finish things off
-		cut = 2*(len(self.BL_range)-1)  # remove calculated values at energies higher than 30 keV
-		self.KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut])/(math.pi*E[:-cut, 0])+self.KK_Relativistic_Correction()
+		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
+		self.KK_Re = kk.KK_PP_BL(self.merged_Im, rel_corr,
+								 self.BL_coefficients, self.BL_range)
+		print "Done!"
 
 
 if __name__ == '__main__':
