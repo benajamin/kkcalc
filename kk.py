@@ -18,7 +18,7 @@ SPEED_OF_LIGHT = 2.99792458e8  # meters per second
 AVOGADRO_CONSTANT = 6.02214129e23  # no unit
 
 
-def relativistic_correction(Z, stoichiometry):
+def calc_relativistic_correction(Z, stoichiometry):
 	"""Calculate the relativistic correction to the
 	Kramers-Kronig transform.
 
@@ -59,17 +59,17 @@ def coeffs_to_ASF(E, coeffs):
 	return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
 
 
-def KK_FFT(merged_Im, Z, stoichiometry):
+def KK_FFT(merged_Im, relativistic_correction):
 	"""Calculate Kramers-Kronig transform with FFT algorithm.
 
 	Parameters
 	----------
 	merged_Im : two dimensional array_like
 		TODO: explain with more detail
-	Z : array_like
-		TODO: explain parameter
-	stoichiometry : array_like
-		TODO: explain parameter
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		You can calculate the value using the
+		`calc_relativistic_correction` function.
 
 	Returns
 	-------
@@ -96,7 +96,7 @@ def KK_FFT(merged_Im, Z, stoichiometry):
 	logger.debug("Second FFT (Part 3/4)")
 	temp_wave = scipy.fftpack.ifft(temp_wave)
 	temp_wave = temp_wave[0:N_E]
-	temp_wave = math.pi*temp_wave.real + relativistic_correction(Z, stoichiometry)
+	temp_wave = math.pi*temp_wave.real + relativistic_correction
 	logger.debug("Reinterpolate (Part 4/4)")
 	even_E = numpy.arange(0, merged_Im[-1, 0], FFT_step)
 	KK_Re = numpy.interp(merged_Im[:, 0], even_E, temp_wave)
@@ -104,7 +104,7 @@ def KK_FFT(merged_Im, Z, stoichiometry):
 	return KK_Re
 
 
-def KK_PP(merged_Im, Z, stoichiometry):
+def KK_PP(merged_Im, relativistic_correction):
 	"""Calculate Kramers-Kronig transform with
 	"Piecewise Polynomial" algorithm.
 
@@ -112,10 +112,10 @@ def KK_PP(merged_Im, Z, stoichiometry):
 	----------
 	merged_Im : two dimensional array_like
 		TODO: explain with more detail
-	Z : array_like
-		TODO: explain parameter
-	stoichiometry : array_like
-		TODO: explain parameter
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		You can calculate the value using the
+		`calc_relativistic_correction` function.
 
 	Returns
 	-------
@@ -150,12 +150,12 @@ def KK_PP(merged_Im, Z, stoichiometry):
 	Symb_singularities = numpy.zeros(len_E)
 	Symb_singularities[1:-1] = 0.5*M2*(X2**2-XE**2)-0.5*M1*(X1**2-XE**2)+YE*((X2-X1)+XE*numpy.log(numpy.absolute((X2-XE)/(X1-XE))))
 	# Finish things off
-	KK_Re = (Symb_A - Symb_singularities) / (math.pi * merged_Im[:, 0]) + relativistic_correction(Z, stoichiometry)
+	KK_Re = (Symb_A - Symb_singularities) / (math.pi * merged_Im[:, 0]) + relativistic_correction
 	logger.debug("Done!")
 	return KK_Re
 
 
-def KK_PP_BL(merged_Im, Z, stoichiometry, BL_coefficients, BL_range):
+def KK_PP_BL(merged_Im, relativistic_correction, BL_coefficients, BL_range):
 	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
 	algorithm plus the Biggs and Lighthill extended data.
 
@@ -163,10 +163,10 @@ def KK_PP_BL(merged_Im, Z, stoichiometry, BL_coefficients, BL_range):
 	----------
 	merged_Im : two dimensional array_like
 		TODO: explain with more detail
-	Z : array_like
-		TODO: explain parameter
-	stoichiometry : array_like
-		TODO: explain parameter
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		You can calculate the value using the
+		`calc_relativistic_correction` function.
 	BL_coefficients : ?
 		TODO: explain
 	BL_range : ?
@@ -219,6 +219,6 @@ def KK_PP_BL(merged_Im, Z, stoichiometry, BL_coefficients, BL_range):
 	Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
 	# Finish things off
 	cut = 2 * (len(BL_range) - 1)  # remove calculated values at energies higher than 30 keV
-	KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut]) / (math.pi*E[:-cut, 0]) + relativistic_correction()
+	KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut]) / (math.pi*E[:-cut, 0]) + relativistic_correction
 	logger.debug("Done!")
 	return KK_Re
