@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+"""Unit tests for `kk.py`."""
+
+import kk
+import unittest
+
+
+class KK_Tests(unittest.TestCase):
+
+	"""Unit tests for the `kk` module."""
+
+	def setUp(self):
+		pass
+
+	def tearDown(self):
+		pass
+
+	def test_relativistic_correction_known_values(self):
+		"""Test relativistic_correction for known values."""
+		known_values = (
+			((1, 1, 1, 1, 1), (1, 1, 1, 1, 1), 4.9998565),
+			((1, 2, 3, 4, 5), (1, 1, 1, 1, 1), 14.9973659),
+			((1, 2, 3, 4, 5), (5, 4, 3, 2, 1), 34.9952628)
+			)
+		for Z, stoichiometry, expected in known_values:
+			result = kk.relativistic_correction(Z, stoichiometry)
+			self.assertTrue(abs(expected - result) < 1E-6,
+							"Expected %.6f, got %.6f" % (expected, result))
+
+	def test_coeffs_to_ASF_known_values(self):
+		"""Test coeffs_to_ASF for known values."""
+		known_values = (
+			(1, (1, 1, 1, 1, 1), 5),
+			(2, (1, 1, 1, 1, 1), 3),
+			(3, (1, 2, 3, 4, 5), 6),
+			(4, (5, 4, 3, 2, 1), 24)
+			)
+		for E, coeffs, expected in known_values:
+			result = kk.coeffs_to_ASF(E, coeffs)
+			self.assertTrue(abs(expected - result) < 1E-6,
+							"Expected %.6f, got %.6f" % (expected, result))
+
+
+if __name__ == "__main__":
+	unittest.main()
