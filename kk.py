@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-This module implements the Kramers-Kronig transformation.
-"""
+# This file is part of the Kramers-Kronig Calculator software package.
+#
+# Copyright (c) 2013 Benjamin Watts, Daniel J. Lauk
+#
+# The software is licensed under the terms of the zlib/libpng license.
+# For details see LICENSE.txt
+
+"""This module implements the Kramers-Kronig transformation."""
 
 import logging
 import math

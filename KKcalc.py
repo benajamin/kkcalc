@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# This file is part of the Kramers-Kronig Calculator software package.
+#
+# Copyright (c) 2013 Benjamin Watts, Daniel J. Lauk
+#
+# The software is licensed under the terms of the zlib/libpng license.
+# For details see LICENSE.txt
+
+"""This module implements a GUI using the wxPython toolkit."""
 
 from wx.lib.fancytext import StaticFancyText
 import math

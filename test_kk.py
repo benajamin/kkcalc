@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Unit tests for `kk.py`."""
+# This file is part of the Kramers-Kronig Calculator software package.
+#
+# Copyright (c) 2013 Benjamin Watts, Daniel J. Lauk
+#
+# The software is licensed under the terms of the zlib/libpng license.
+# For details see LICENSE.txt
+
+"""Unit tests for module `kk.py`."""
 
 import kk
 import unittest
