@@ -14,16 +14,22 @@ AVOGADRO_CONSTANT = 6.02214129e23  # no unit
 
 
 def convert_Beta_to_ASF(raw_data, density):
-	"""Convert Beta data to atomic scattering factors (ASF).
+	"""Convert Beta data (index of refraction) to atomic scattering
+	factors (ASF).
+
+	The Beta value is the imaginary part of the index of refraction.
+	This represents the absorption.
 
 	Parameters
 	----------
-	raw_data : two-dimensional array of `float`
-		TODO: explain
+	raw_data : two-dimensional `numpy.array` of `float`
+		The array consists of two columns: Energy and magnitude.
 
 	Returns
 	-------
-	TODO: explain
+	The function returns a `numpy.array` of atomic scattering factors.
+	They are made up of the energy and the magnitude of the imaginary
+	part of the atomic scattering factors.
 
 	"""
 	raw_Im = raw_data[:, :2].copy()
@@ -34,7 +40,7 @@ def convert_Beta_to_ASF(raw_data, density):
 def convert_BL_to_ASF(E, coeffs, Atomic_mass):
 	"""Convert Biggs and Lighthill (BL) to atomic scattering factors (ASF).
 
-	Biggs and Lighthill offers photoelectric cross-section with the
+	Biggs and Lighthill offers photoelectric cross-section (PECS) with the
 	sum of AnE^-n for n=1-4  {E in keV and PECS in cm^2/g}.
 
 	Henke scattering factors related by
@@ -45,13 +51,15 @@ def convert_BL_to_ASF(E, coeffs, Atomic_mass):
 	E : float
 		Energy in eV
 	coeffs : array of float
-		TODO: explain
+		Polynomial coefficients describing the function of the
+		scattering factors
 	Atomic_mass : float
 		Atomic mass of the element (in units = g/mol)
 
 	Returns
 	-------
-	TODO: explain
+	The function returns the magnitude of the imaginary
+	part of the atomic scattering factors at energy `E`.
 
 	"""
 	return (coeffs[0] + coeffs[1]/(E*0.001) + coeffs[2]/((E*0.001)**2) + coeffs[3]/((E*0.001)**3))*Atomic_mass/(2*AVOGADRO_CONSTANT*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*0.1
@@ -62,12 +70,14 @@ def convert_NEXAFS_to_ASF(raw_data):
 
 	Parameters
 	----------
-	raw_data : two-dimensional array of `float`
-		TODO: explain
+	raw_data : two-dimensional `numpy.array` of `float`
+		The array consists of two columns: Energy and magnitude.
 
 	Returns
 	-------
-	TODO: explain
+	The function returns a `numpy.array` of atomic scattering factors.
+	They are made up of the energy and the magnitude of the imaginary
+	part of the atomic scattering factors.
 
 	"""
 	raw_Im = raw_data[:, :2].copy()
