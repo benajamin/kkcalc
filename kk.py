@@ -11,23 +11,18 @@ import numpy
 import scipy.fftpack
 
 
-# Constants
-CLASSICAL_ELECTRON_RADIUS = 2.81794029957951365441605230194258e-15  # meters
-PLANCKS_CONSTANT = 4.1356673310e-15  # eV*seconds
-SPEED_OF_LIGHT = 2.99792458e8  # meters per second
-AVOGADRO_CONSTANT = 6.02214129e23  # no unit
-
-
 def calc_relativistic_correction(Z, stoichiometry):
 	"""Calculate the relativistic correction to the
 	Kramers-Kronig transform.
 
 	Parameters:
 	-----------
-	Z : array_like
-		TODO: explain parameter
-	stoichiometry : array_like
-		TODO: explain parameter
+	Z : array of integers
+		The list of elements identified by their atomic number
+		(not mass).
+	stoichiometry : array of integers
+		The list of element counts (i.e. the relative proportions
+		of the elements).
 
 	Returns
 	-------
@@ -36,8 +31,8 @@ def calc_relativistic_correction(Z, stoichiometry):
 
 	"""
 	correction = 0
-	for i in xrange(len(Z)):
-		correction += (Z[i] - (Z[i]/82.5)**2.37) * stoichiometry[i]
+	for z, s in zip(Z, stoichiometry):
+		correction += (z - (z/82.5)**2.37) * s
 	return correction
 
 
