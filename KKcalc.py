@@ -589,7 +589,7 @@ class MyFrame(wx.Frame):
 	def parse_BL_file(self):
 		continue_norm = True # Normalise the Biggs and Lighthill data as the published scattering factors do, rather than as Henke et al says.
 		BLfile = {}
-		for line in open('original_biggs_file.dat'):
+		for line in open(os.path.join('asf','original_biggs_file.dat')):
 			try:
 				values = [float(f) for f in line.split()]
 				if values[3] > 10:
