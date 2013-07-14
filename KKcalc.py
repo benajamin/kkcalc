@@ -291,31 +291,12 @@ class MyFrame(wx.Frame):
 	def OnOpen(self, e):
 		"""Load data from a file."""
 		success = False
-		if wx.version() in ['2.8.12.1 (gtk2-unicode)', '2.8.12.1 (gtk2)']:  # Add buggy WX versions to this list!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			print 'use Tk work-around'
-			import Tkinter
-			from tkFileDialog import askopenfilename
-			root = Tkinter.Tk()
-			root.withdraw()
-			output = askopenfilename()
-			root.destroy()
-			print output, len(output)
-			if len(output) is not 0:
-				success = True
-				self.dirname, self.filename = os.path.split(output)
-		else:
-			dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.OPEN)
-			if dlg.ShowModal() == wx.ID_OK:
-				success = True
-				self.filename = dlg.GetFilename()
-				self.dirname = dlg.GetDirectory()
-				if not os.path.exists(os.path.join(self.dirname, self.filename)):
-					print 'Did you choose a file in '+self.dirname+'? This might be a known bug in WX. The current WX version number is:'
-					print wx.version()
-					print 'Add the above version string to the list in the python code near line 270 (a comment in the code will show the exact location) to use a workaround.'
-			dlg.Destroy()
+		dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.OPEN)
+		if dlg.ShowModal() == wx.ID_OK:
+			success = True
+			self.dirname, self.filename = os.path.split(dlg.GetPath())
+		dlg.Destroy()
 		if success:
-			print self.dirname, self.filename
 			self.FileText.SetLabel("File: "+self.filename)
 			self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
 
@@ -379,7 +360,7 @@ class MyFrame(wx.Frame):
 			return data
 
 	def combine_data(self):
-		"""Extend NEXAFS data with Henke data."""
+		"""Combine NEXAFS data with Henke and Biggs&Lighthill data."""
 		if self.raw_file is not None:
 			print "Convert to scattering factors"
 			raw_Im = self.ConvertData(self.raw_file)
