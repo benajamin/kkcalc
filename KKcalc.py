@@ -139,14 +139,15 @@ class MyFrame(wx.Frame):
 		self.dirname = ''
 		self.raw_file = None
 		self.total_asf = None
+		self.total_Im_coeffs = None
 		self.merged_Im = None
 		self.nexafs_CutOut = []
 		self.KK_Re = None
 		self.MolecularMass = 1
 		self.asf_bg = None
 		# Get data about elements
-		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]
-		self.parse_BL_file()  # Get Biggs and Lighthill data
+		self.Element_Database = data.load_Element_Database()
+#		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]
 
 		# Setting up the menus.
 		filemenu = wx.Menu()
@@ -539,25 +540,25 @@ class MyFrame(wx.Frame):
 	def select_element(self, evt):
 		"""Select an element."""
 		cb = evt.GetEventObject()
-		data = cb.GetClientData(evt.GetSelection())
-		print "data =", data
 		datalist = []
 		n = 0
 		N = None
 		for box in self.MaterialBox.contents:
-			datalist.append(box[1].GetClientData(box[1].GetSelection()))
+			datalist.append(box[1].GetSelection())
 			if box[1]==cb:
 				N = n
 			n = n+1
+		#print 'datalist =', datalist
 		try:  # check corresponding textctrl and put in a 1 if empty
 			num_value = float(self.MaterialBox.contents[N][2].GetValue())
 		except ValueError:
 			self.MaterialBox.contents[N][2].SetValue("1")
 
-		if data == None:  # might need to remove a box
-			if None in datalist and datalist.index(None) != len(datalist)-1:
+		if evt.GetSelection() is 0:  # might need to remove a box
+			if 0 in datalist and datalist.index(0) != len(datalist)-1:
 				# remove extra boxes
-				dead_box = datalist.index(None)
+				dead_box = datalist.index(0)
+				print dead_box
 				# Remove and destroy combobox
 #				self.MaterialBox.contents[dead_box][0].Clear(True)
 				self.MaterialBox.contents[dead_box][0].Detach(0)
@@ -572,48 +573,14 @@ class MyFrame(wx.Frame):
 				# adjust GUI layout
 				self.Layout()
 		else:
-			print "Load nff data from:", os.path.join(os.getcwd(), 'asf', data[1])
-			asfrawdata = self.LoadData(os.path.join(os.getcwd(), 'asf', data[1]))
-			if min(asfrawdata[1:-1, 0]-asfrawdata[0:-2, 0])<0:
-				print "Warning! Energies in ", data[1], "are not in ascending order!"
-			cb.asfdata = dict([['E', asfrawdata[:, 0]], ['Re', scipy.interpolate.splrep(asfrawdata[:, 0], asfrawdata[:, 1], k=1)], ['Im', scipy.interpolate.splrep(asfrawdata[:, 0], asfrawdata[:, 2], k=1)]])
-
-			if None not in datalist:
+			if 0 not in datalist:
 				# add spare box
+				#print 'Add box'
 				self.add_element()
 				self.Layout()
 				if self.MaterialBox.GetSize()[1] < self.MaterialBox.CalcMin()[1]:
 					self.Fit()
 		self.calc_asfdata()
-
-	def parse_BL_file(self):
-		continue_norm = True # Normalise the Biggs and Lighthill data as the published scattering factors do, rather than as Henke et al says.
-		BLfile = {}
-		for line in open(os.path.join('asf','original_biggs_file.dat')):
-			try:
-				values = [float(f) for f in line.split()]
-				if values[3] > 10:
-					Norm_value = 0  # will calculate actual normalisation value later
-					if not continue_norm and values[2] > 10 and values[2] not in [20, 100, 500, 100000]:
-						Norm_value = 1
-					elif not continue_norm and values[0] == 42 and values[2] > 10 and values[2] not in [100, 500, 100000]:  # Mo needs special handling
-						# print "Mo seen at", values[0], values[2]
-						Norm_value = 1
-					values.append(Norm_value)
-					if values[2] not in [0.01, 0.1, 0.8, 4, 20, 100, 500, 100000] or (values[0] == 42 and values[2] == 20):
-						values.append(1)  # this is an absorption edge!
-					else:
-						values.append(0)  # this is not an absorption edge
-					BLfile[int(values[0])].append(values)
-			except ValueError:
-				pass
-			except IndexError:
-				pass
-			except KeyError:
-				BLfile[int(values[0])] = [values]
-		for elem, coeffs in BLfile.items():
-			BLfile[elem] = numpy.array(coeffs)[:, 2:]
-		self.BL_file = BLfile
 
 	def add_element(self):
 		"""Add element GUI items."""
@@ -626,7 +593,7 @@ class MyFrame(wx.Frame):
 		ElementSizer.contents = (element_ComboBox, element_Text)
 		ElementSizer.Add(element_ComboBox, 1)#, wx.Grow)
 		ElementSizer.Add(element_Text, 1)#, wx.Grow)
-#		print "Insert in materialsbox at:", max(1, len(self.MaterialBox.GetChildren())-1)
+		#print "Insert in materialsbox at:", max(1, len(self.MaterialBox.GetChildren())-2)
 		self.MaterialBox.Insert(max(2, len(self.MaterialBox.GetChildren())-1), ElementSizer, 0, wx.GROW)
 		# various bookkeeping
 		element_ComboBox.Bind(wx.EVT_COMBOBOX, self.select_element)
@@ -634,7 +601,7 @@ class MyFrame(wx.Frame):
 		element_Text.Bind(wx.EVT_KILL_FOCUS, self.element_Text_check)
 		element_Text.Bind(wx.EVT_TEXT_ENTER, self.element_Text_check)
 		self.MaterialBox.contents.append([ElementSizer, element_ComboBox, element_Text])
-#		print "there are now", len(self.MaterialBox.GetChildren())-1, "element boxes"
+		#print "there are now", len(self.MaterialBox.GetChildren())-3, "element boxes"
 
 	def Splice_Text_check(self, evt):
 		self.combine_data()
@@ -661,8 +628,8 @@ class MyFrame(wx.Frame):
 	def populate_elements(self, cb):
 		"""Append elements."""
 		cb.Append('')
-		for element in self.Elements:
-			cb.Append(element[1], [element[0], element[4], element[3]])
+		for element in range(1,93):
+			cb.Append(self.Element_Database[str(element)]['symbol'])
 
 	def calc_asfdata(self):
 		"""Calculate atomic scattering factors."""
@@ -675,60 +642,50 @@ class MyFrame(wx.Frame):
 		self.Z = []
 		self.MolecularFormula = ""
 		self.MolecularMass = 0
-		asfdatalist = []
-		self.BLcoeffs = []
 		for i in range(len(self.MaterialBox.contents)-1):
 			try:  # sanitise inputs
 				self.stoichiometry.append(float(self.MaterialBox.contents[i][2].GetValue()))
-				self.Z.append(int(self.MaterialBox.contents[i][1].GetClientData(self.MaterialBox.contents[i][1].GetSelection())[0]))  # Need Z for relativistic correction
-				asfdatalist.append(self.MaterialBox.contents[i][1].asfdata)
-				self.BLcoeffs.append(self.BL_file[self.Z[-1]])
+				self.Z.append(int(self.MaterialBox.contents[i][1].GetSelection()))  # Need Z for relativistic correction
 				# Construct molecular formula for savefile header
 				num = self.stoichiometry[-1]
 				if num==round(num):num=int(num)
 				if num!=0:
-				  self.MolecularFormula = self.MolecularFormula+self.MaterialBox.contents[i][1].GetValue()+str(num)
-				  self.MolecularMass = self.MolecularMass+num*float(self.MaterialBox.contents[i][1].GetClientData(self.MaterialBox.contents[i][1].GetSelection())[2])
+					self.MolecularFormula = self.MolecularFormula+self.MaterialBox.contents[i][1].GetValue()+str(num)
+					self.MolecularMass = self.MolecularMass+num*float(self.Element_Database[str(self.MaterialBox.contents[i][1].GetSelection())]['mass'])
+					#print self.MolecularMass
 			except ValueError:
 				pass
 		if len(self.stoichiometry)!=0:
 			# get unique energy points
 			temp_E = numpy.array([])
-			for set in asfdatalist:
-				temp_E = numpy.concatenate((temp_E, set['E']))
+			for element in self.Z:
+				temp_E = numpy.concatenate((temp_E, self.Element_Database[str(element)]['E']))
 			temp_E = numpy.unique(temp_E)
-			# add weighted asf data sets
-			self.total_asf = numpy.zeros((len(temp_E), 3))
-			self.total_asf[:, 0] = temp_E
-			for i in range(len(asfdatalist)):
-				self.total_asf[:, 1] = self.total_asf[:, 1]+self.stoichiometry[i]*scipy.interpolate.splev(temp_E, asfdatalist[i]['Re'], der=0)
-				self.total_asf[:, 2] = self.total_asf[:, 2]+self.stoichiometry[i]*scipy.interpolate.splev(temp_E, asfdatalist[i]['Im'], der=0)
-			# normalise and combine Biggs and Lighthill coefficients
-			temp_E = []
-			for i, z in enumerate(self.Z):
-				# get normalisation values
-				ASF_norm = scipy.interpolate.splev(10000, asfdatalist[i]['Im'], der=0)
-				BL_norm = data.convert_BL_to_ASF(10000, self.BLcoeffs[i][0][3:7], float(self.Elements[z-1][3]))
-				for line in self.BLcoeffs[-i]:
-					temp_E.append(line[0])
-					if not line[7]:
-						line[7] = BL_norm/ASF_norm
-						line[3:7] = line[3:7]/line[7]
-			temp_E = numpy.unique(temp_E)
-			temp_E = numpy.insert(temp_E[temp_E.searchsorted(30):], 0, 30)# Select set of energy ranges to use in extending beyond 30 keV
-			self.BL_coefficients = []
-			for i in range(len(temp_E)-1):
-				coeff_list = [0, 0, 0, 0, 0]
-				for n, elem in enumerate(self.BLcoeffs):
-					for line in elem:
-						if line[0]<=temp_E[i] and line[1]>=temp_E[i+1]:
-							coeff_list = coeff_list+line[2:7]*self.stoichiometry[n]
-				# convert from Biggs and Lighthill units to scattering factors
-				coeff_list = coeff_list*[0, 1, 1000, 1000000, 1000000000]*float(self.Elements[self.Z[n]-1][3])/(2*data.AVOGADRO_CONSTANT*data.CLASSICAL_ELECTRON_RADIUS*data.PLANCKS_CONSTANT*data.SPEED_OF_LIGHT)*0.1
-				self.BL_coefficients.append(coeff_list)
-			# store for use in calculation
-			self.BL_coefficients = numpy.array(self.BL_coefficients)
-			self.BL_range = temp_E*1000
+			# add weighted asf data sets for KK calculation
+			self.total_Im_coeffs = numpy.zeros((len(temp_E)-1, 5))
+			counters = numpy.zeros((len(self.Z)))
+			for i,E in enumerate(temp_E[1:]):
+				#print "\nE =", E, "\t counters =", counters, "\t compare = ",
+				sum_Im_coeffs = 0
+				for j in range(len(counters)):
+					sum_Im_coeffs += self.stoichiometry[j]*self.Element_Database[str(self.Z[j])]['Im'][counters[j],:]
+					counters[j] += self.Element_Database[str(self.Z[j])]['E'][counters[j]+1] == E
+				self.total_Im_coeffs[i,:] = sum_Im_coeffs
+			# add weighted data sets for plotting
+			Henke_end_index = numpy.where(temp_E==30000)[0][0]+1
+			self.total_asf = numpy.zeros((Henke_end_index, 3))
+			self.total_asf[:, 0] = temp_E[:Henke_end_index]
+			counters = numpy.zeros((len(self.Z)))
+			for i in range(Henke_end_index):
+				for j in range(len(self.Z)):
+					if self.Element_Database[str(self.Z[j])]['E'][counters[j]] == temp_E[i]:#keeping pace
+						self.total_asf[i, 1] += self.stoichiometry[j]*self.Element_Database[str(self.Z[j])]['Re'][counters[j]]
+						counters[j] += 1
+					else: #need to interpolate extra point
+						# Use method of Y = y0 + (y1-y0)*[(X-x0)/(x1-x0)]
+						X_fraction = (temp_E[i] - self.Element_Database[str(self.Z[j])]['E'][counters[j]-1])/(self.Element_Database[str(self.Z[j])]['E'][counters[j]] - self.Element_Database[str(self.Z[j])]['E'][counters[j]-1])
+						self.total_asf[i, 1] += self.stoichiometry[j]*(self.Element_Database[str(self.Z[j])]['Re'][counters[j]-1]+X_fraction*(self.Element_Database[str(self.Z[j])]['Re'][counters[j]]-self.Element_Database[str(self.Z[j])]['Re'][counters[j]-1]))
+			self.total_asf[:, 2] = self.Coeffs_to_ASF(temp_E[:Henke_end_index],self.total_Im_coeffs[:Henke_end_index,:])
 		# resplice with raw nexafs data, if any is loaded
 		self.combine_data()
 		# plot asf data
@@ -770,7 +727,7 @@ class MyFrame(wx.Frame):
 		{E in eV and PECS in cm^2/atom}.
 
 		"""
-		return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
+		return coeffs[:,0]*E + coeffs[:,1] + coeffs[:,2]/E + coeffs[:,3]/(E**2) + coeffs[:,4]/(E**3)
 
 	def KK_PP_BL(self):
 		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"

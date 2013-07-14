@@ -11,6 +11,7 @@
 """This module implements data formats and conversions."""
 
 import logging
+import json, numpy
 
 
 # Constants
@@ -90,3 +91,29 @@ def convert_NEXAFS_to_ASF(raw_data):
 	raw_Im = raw_data[:, :2].copy()
 	raw_Im[:, 1] = raw_data[:, 0]*raw_data[:, 1]/(2*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)
 	return raw_Im
+
+def load_Element_Database():
+	with open('ASF.json','r') as f:
+		Element_Database = json.load(f)
+	for Z in range(1,93):
+		Element_Database[str(Z)]['E'] = numpy.array(Element_Database[str(Z)]['E'])
+		Element_Database[str(Z)]['Im'] = numpy.array(Element_Database[str(Z)]['Im'])
+		Element_Database[str(Z)]['Re'] = numpy.array(Element_Database[str(Z)]['Re'])
+	return Element_Database
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
