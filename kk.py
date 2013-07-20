@@ -13,7 +13,6 @@
 import logging
 import math
 import numpy
-import scipy.fftpack
 
 
 def calc_relativistic_correction(Z, stoichiometry):
@@ -60,119 +59,6 @@ def coeffs_to_ASF(E, coeffs):
 	return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
 
 
-def KK_FFT(imaginary_spectrum, relativistic_correction):
-	"""Calculate Kramers-Kronig transform with FFT algorithm.
-
-	Parameters
-	----------
-	imaginary_spectrum : two-dimensional `numpy.array` of `float`
-		The array consists of two columns: Energy and magnitude.
-	relativistic_correction : float
-		The relativistic correction to the Kramers-Kronig transform.
-		You can calculate the value using the
-		`calc_relativistic_correction` function.
-
-	Returns
-	-------
-	This function returns the real part of the scattering factors.
-
-	"""
-	logger = logging.getLogger(__name__)
-	logger.info("Calculate Kramers-Kronig transform (FFT)")
-	E_step = imaginary_spectrum[1:-1, 0] - imaginary_spectrum[0:-2, 0]
-	FFT_step = min(E_step)/2
-	even_E = numpy.arange(0, imaginary_spectrum[-1, 0], FFT_step)
-	N_E = len(even_E)
-	N_pow2 = 2**math.ceil(math.log(N_E, 2))
-	logger.debug("Use step size of %d eV (%d + %d points)" %
-				 (FFT_step, N_E, N_pow2-N_E))
-	logger.debug("Interpolate (Part 1/4)")
-	even_Im = numpy.interp(even_E, imaginary_spectrum[:, 0], imaginary_spectrum[:, 1],
-						   left=0, right=0)
-	del even_E  # maximise available memory, we can recalculate even_E when needed.
-	logger.debug("First FFT (Part 2/4)")
-	temp_wave = 2 / math.pi * scipy.fftpack.fft(even_Im, n=2*N_pow2).imag
-	del even_Im
-	temp_wave[N_pow2:-1] = -temp_wave[N_pow2:-1]
-	logger.debug("Second FFT (Part 3/4)")
-	temp_wave = scipy.fftpack.ifft(temp_wave)
-	temp_wave = temp_wave[0:N_E]
-	temp_wave = math.pi*temp_wave.real + relativistic_correction
-	logger.debug("Reinterpolate (Part 4/4)")
-	even_E = numpy.arange(0, imaginary_spectrum[-1, 0], FFT_step)
-	KK_Re = numpy.interp(imaginary_spectrum[:, 0], even_E, temp_wave)
-	logger.debug("Done!")
-	return KK_Re
-
-
-def KK_PP_BL(imaginary_spectrum, relativistic_correction, BL_coefficients, BL_range):
-	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
-	algorithm plus the Biggs and Lighthill extended data.
-
-	Parameters
-	----------
-	imaginary_spectrum : two-dimensional `numpy.array` of `float`
-		The array consists of two columns: Energy and magnitude.
-	relativistic_correction : float
-		The relativistic correction to the Kramers-Kronig transform.
-		You can calculate the value using the
-		`calc_relativistic_correction` function.
-	BL_coefficients : two-dimensional `numpy.array` of `float`
-		Polynomial coefficients describing the function of the
-		scattering factors
-	BL_range : `numpy.array` of `float`
-		The energies corresponding to the `BL_coefficients`
-
-	Returns
-	-------
-	This function returns the real part of the scattering factors.
-
-	"""
-	logger = logging.getLogger(__name__)
-	logger.info("Calculate Kramers-Kronig transform (PP) plus BL data")
-	len_E = len(imaginary_spectrum[:, 0])
-	M = (imaginary_spectrum[1:, 1] - imaginary_spectrum[0:-1, 1]) / (imaginary_spectrum[1:, 0] - imaginary_spectrum[0:-1, 0])
-	B = imaginary_spectrum[0:-1, 1] - M*imaginary_spectrum[0:-1, 0]
-	E = imaginary_spectrum[:, 0]
-	Full_coeffs = numpy.zeros((len_E-1, 5))
-	Full_coeffs[:, 0] = M
-	Full_coeffs[:, 1] = B
-	# B&L extension
-	C = BL_coefficients
-	X = BL_range
-	E = E[0:-1]
-	for i in range(len(X)-1):
-		Y1 = coeffs_to_ASF(X[i]-0.2, Full_coeffs[-1, :])
-		Y2 = coeffs_to_ASF(X[i]+0.2, C[i, :])
-		M = (Y2-Y1)/0.4
-		B = Y1-M*(X[i]-0.2)
-		E = numpy.append(E, [X[i]-0.2, X[i]+0.2])
-		Full_coeffs = numpy.append(Full_coeffs, [[M, B, 0, 0, 0]], axis=0)
-		Full_coeffs = numpy.append(Full_coeffs, [C[i, :]], axis=0)
-	E = numpy.append(E, X[-1])
-	X1 = E[0:-1]
-	X2 = E[1:]
-	E = numpy.tile(E, (len(E)-1, 1)).T
-	Full_coeffs = Full_coeffs.T
-	Ident = numpy.identity(len(E))  # Use this to annul illegal operations
-	temp = (1-(Ident[:, 1:]+Ident[:, 0:-1]))
-	Symb_1 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*((Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
-	Symb_2 =                                   (-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                          +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1)
-	Symb_B = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
-	# Patch singularities
-	X1 = E[0:-2, 0]
-	XE = E[1:-1, 0]
-	X2 = E[2:, 0]
-	C1 = Full_coeffs[:, 0:-1]
-	C2 = Full_coeffs[:, 1:]
-	Symb_singularities = numpy.zeros(len(E))
-	Symb_singularities[1:-1] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0, :]*XE+C2[1, :])*(X2-XE)+0.5*C2[0, :]*(X2**2-XE**2)-(C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4, :]*XE**-1*(X2**-2-XE**-2)
-	Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
-	# Finish things off
-	cut = 2 * (len(BL_range) - 1)  # remove calculated values at energies higher than 30 keV
-	KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut]) / (math.pi*E[:-cut, 0]) + relativistic_correction
-	logger.debug("Done!")
-	return KK_Re
 
 def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
 	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"

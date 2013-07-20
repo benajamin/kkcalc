@@ -14,10 +14,6 @@ from wx.lib.fancytext import StaticFancyText
 import math
 import numpy
 import os
-import scipy
-import scipy.fftpack
-import scipy.interpolate
-import scipy.io
 import time  # only for profiling
 import wx
 import wx.lib.plot as plot
@@ -228,10 +224,6 @@ class MyFrame(wx.Frame):
 
 		############################Calc box
 		CalcBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Calculation"), wx.VERTICAL)
-		self.PP_AlgorithmRadio = wx.RadioButton(self, -1, "Piecewise-polynomial", style=wx.RB_GROUP)
-		self.FFT_AlgorithmRadio = wx.RadioButton(self, -1, "FFT-based")
-		CalcBox.Add(self.PP_AlgorithmRadio, 1, wx.GROW)
-		CalcBox.Add(self.FFT_AlgorithmRadio, 1, wx.GROW)
 		CalcButton = wx.Button(self, -1, "Calculate")
 		CalcBox.Add(CalcButton, 1, wx.GROW)
 		CalcButton.Bind(wx.EVT_BUTTON, self.calculate)
@@ -698,20 +690,9 @@ class MyFrame(wx.Frame):
 		print "Calculate button"
 		if self.merged_Im is not None:
 			tic = time.time()
-			if self.FFT_AlgorithmRadio.GetValue():
-				self.KK_FFT()
-			else:
-				self.KK_PP()
-				#self.KK_PP_BL()
+			self.KK_PP()
 			print "Completed in ", round(time.time()-tic, 3), "seconds."
 			self.plot_data()
-
-	def KK_FFT(self):
-		"""Calculate Kramers-Kronig transform with FFT algorithm."""
-		print "Calculate Kramers-Kronig transform (FFT)"
-		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
-		self.KK_Re = kk.KK_FFT(self.merged_Im, rel_corr)
-		print "Done!"
 
 	def KK_PP(self):
 		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm.
@@ -730,15 +711,6 @@ class MyFrame(wx.Frame):
 		"""
 		return coeffs[:,0]*E + coeffs[:,1] + coeffs[:,2]/E + coeffs[:,3]/(E**2) + coeffs[:,4]/(E**3)
 
-	def KK_PP_BL(self):
-		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
-		algorithm plus the Biggs and Lighthill extended data.
-
-		"""
-		print "Calculate Kramers-Kronig transform (PP) plus BL data"
-		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
-		self.KK_Re = kk.KK_PP_BL(self.merged_Im, rel_corr, self.BL_coefficients, self.BL_range)
-		print "Done!"
 
 
 if __name__ == '__main__':
