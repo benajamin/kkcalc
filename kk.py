@@ -173,3 +173,48 @@ def KK_PP_BL(imaginary_spectrum, relativistic_correction, BL_coefficients, BL_ra
 	KK_Re = (Symb_B[:-cut]-Symb_singularities[:-cut]) / (math.pi*E[:-cut, 0]) + relativistic_correction
 	logger.debug("Done!")
 	return KK_Re
+
+def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
+	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
+	algorithm plus the Biggs and Lighthill extended data.
+
+	Parameters
+	----------
+	Energy : numpy vector of `float`
+		Set of photon energies describing intervals for which each row of `imaginary_spectrum` is valid
+	imaginary_spectrum : two-dimensional `numpy.array` of `float`
+		The array consists of five columns of polynomial coefficients: A_1, A_0, A_-1, A_-2, A_-3
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		You can calculate the value using the `calc_relativistic_correction` function.
+
+	Returns
+	-------
+	This function returns the real part of the scattering factors.
+
+	"""
+	logger = logging.getLogger(__name__)
+	logger.info("Calculate Kramers-Kronig transform using piecewise-polynomial algorithm")
+	X1 = Energy[0:-1]
+	X2 = Energy[1:]
+	E = numpy.tile(Energy, (len(Energy)-1, 1)).T
+	Full_coeffs = imaginary_spectrum.T
+	Ident = numpy.identity(len(E))  # Use this to annul illegal operations
+	temp = (1-(Ident[:, 1:]+Ident[:, 0:-1]))
+	Symb_1 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*((Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
+	Symb_2 =                                   (-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                            +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1)
+	Symb_B = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
+	# Patch singularities
+	X1 = E[0:-2, 0]
+	XE = E[1:-1, 0]
+	X2 = E[2:, 0]
+	C1 = Full_coeffs[:, 0:-1]
+	C2 = Full_coeffs[:, 1:]
+	Symb_singularities = numpy.zeros(len(Energy))
+	Symb_singularities[1:-1] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0, :]*XE+C2[1, :])*(X2-XE)+0.5*C2[0, :]*(X2**2-XE**2)-(C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4, :]*XE**-1*(X2**-2-XE**-2)
+	Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
+	# Finish things off
+	KK_Re = (Symb_B-Symb_singularities) / (math.pi*Energy) + relativistic_correction
+	logger.debug("Done!")
+	return KK_Re
+

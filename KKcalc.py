@@ -263,7 +263,7 @@ class MyFrame(wx.Frame):
 
 		self.Show(True)
 		self.plot_data()
-		self.Test()
+		#self.Test()
 
 	def Test(self):
 		"""Convenience function for repetitive testing"""
@@ -517,7 +517,7 @@ class MyFrame(wx.Frame):
 		if self.KK_Re is not None:
 			Y_Re_max = max(Y_Re_max, max(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
 			Y_Re_min = min(Y_Re_min, min(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
-			plotlist_Re.append(plot.PolyLine(numpy.vstack((self.merged_Im[:, 0], self.KK_Re)).T, colour='green', width=1))
+			plotlist_Re.append(plot.PolyLine(numpy.vstack((self.merged_E, self.KK_Re)).T, colour='green', width=1))
 
 		# Expand plotting limits for prettiness
 		window_width = X_max-X_min
@@ -696,8 +696,8 @@ class MyFrame(wx.Frame):
 			if self.FFT_AlgorithmRadio.GetValue():
 				self.KK_FFT()
 			else:
-				# self.KK_PP()
-				self.KK_PP_BL()
+				self.KK_PP()
+				#self.KK_PP_BL()
 			print "Completed in ", round(time.time()-tic, 3), "seconds."
 			self.plot_data()
 
@@ -709,13 +709,12 @@ class MyFrame(wx.Frame):
 		print "Done!"
 
 	def KK_PP(self):
-		"""Calculate Kramers-Kronig transform with
-		"Piecewise Polynomial" algorithm.
+		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm.
 
 		"""
 		print "Calculate Kramers-Kronig transform (PP)"
 		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
-		self.KK_Re = kk.KK_PP(self.merged_Im, rel_corr)
+		self.KK_Re = kk.KK_PP(self.merged_E, self.merged_Im_coeffs, rel_corr)
 		print "Done!"
 
 	def Coeffs_to_ASF(self, E, coeffs):
@@ -733,8 +732,7 @@ class MyFrame(wx.Frame):
 		"""
 		print "Calculate Kramers-Kronig transform (PP) plus BL data"
 		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
-		self.KK_Re = kk.KK_PP_BL(self.merged_Im, rel_corr,
-								 self.BL_coefficients, self.BL_range)
+		self.KK_Re = kk.KK_PP_BL(self.merged_Im, rel_corr, self.BL_coefficients, self.BL_range)
 		print "Done!"
 
 
