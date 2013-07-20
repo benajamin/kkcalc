@@ -361,7 +361,6 @@ class MyFrame(wx.Frame):
 
 	def combine_data(self):
 		"""Combine users near-edge data with extended spectrum data."""
-		#TODO do all data scaling using the coeff extended spectrum data (not with the point-wise extended spectrum data)
 		if self.raw_file is not None:
 			print "Convert to scattering factors"
 			raw_Im = self.ConvertData(self.raw_file)
@@ -400,7 +399,8 @@ class MyFrame(wx.Frame):
 		elif self.raw_file is not None and self.total_asf is not None:
 			# get start and end Y values from nexafs and asf data
 			splice_nexafs_Im = numpy.interp(splice_eV, raw_Im[:, 0], raw_Im[:, 1])
-			splice_asf_Im = numpy.interp(splice_eV, self.total_asf[:, 0], self.total_asf[:, 2])
+			#splice_asf_Im = numpy.interp(splice_eV, self.total_asf[:, 0], self.total_asf[:, 2])
+			splice_asf_Im = (kk.coeffs_to_ASF(splice_eV[0],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[0])[0][-1]]),kk.coeffs_to_ASF(splice_eV[1],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[1])[0][-1]]))
 			cut_boolean = (splice_eV[0]<raw_Im[:, 0]) == (raw_Im[:, 0]<splice_eV[1])
 			# Merge Y values
 			if not self.AddBackgroundCheckBox.GetValue():
@@ -409,7 +409,7 @@ class MyFrame(wx.Frame):
 				scaled_nexafs_Im = ((raw_Im[:, 1]-splice_nexafs_Im[0])*scale)+splice_asf_Im[0]
 				self.asf_bg = None  # We won't be using this variable this time
 			else:
-				print "Add data sets"
+				print "Add data sets (this will currently only work at energies below 30 keV)"
 				# Set up background function
 				# We trust this point to be just before the absorption edge
 				trusted_ind = max(0, numpy.where(self.total_asf[:, 0]>splice_eV[0])[0][0]-1)
@@ -462,7 +462,9 @@ class MyFrame(wx.Frame):
 		self.KK_Re = None
 
 	def plot_data(self):
-		"""Plot data."""
+		"""Plot data.
+		TODO: redesign how the plotting is done to be based on the coefficient based data, so that plotting isn't limited to 30 keV.
+		"""
 		print "plotting data"
 		# List of things to plot
 		plotlist_Im = []
@@ -486,6 +488,7 @@ class MyFrame(wx.Frame):
 			# get Y limits
 			Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], 1])
 			Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], 1])
+			#print self.merged_Im
 			plotlist_Im.append(plot.PolyLine(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], :], colour='blue', width=1))  # User data
 			if len(self.nexafs_CutOut)!=0:
 				plotlist_Im.append(plot.PolyMarker(self.nexafs_CutOut, colour='blue', marker='cross', size=1))
@@ -521,7 +524,7 @@ class MyFrame(wx.Frame):
 
 		# Expand plotting limits for prettiness
 		window_width = X_max-X_min
-		X_max = min(X_max+window_width*0.1, 30000)
+		X_max = X_max+window_width*0.1
 		X_min = max(X_min-window_width*0.1, 0)
 		window_Im_height = Y_Im_max-Y_Im_min
 		window_Re_height = Y_Re_max-Y_Re_min
@@ -530,6 +533,8 @@ class MyFrame(wx.Frame):
 		Y_Re_max = Y_Re_max+window_Re_height*0.1
 		Y_Re_min = Y_Re_min-window_Re_height*0.1
 		# set up text, axis and draw
+		#print plotlist_Im
+		#print X_min, X_max, Y_Im_min, Y_Im_max
 		self.Iplot.Draw(plot.PlotGraphics(plotlist_Im, '', '', 'Imaginary'), xAxis=(X_min, X_max), yAxis=(0, Y_Im_max))
 		self.Rplot.Draw(plot.PlotGraphics(plotlist_Re, '', 'Energy (eV)', 'Real'), xAxis=(X_min, X_max), yAxis=(Y_Re_min, Y_Re_max))
 
