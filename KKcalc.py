@@ -263,7 +263,7 @@ class MyFrame(wx.Frame):
 
 		self.Show(True)
 		self.plot_data()
-		# self.Test()
+		self.Test()
 
 	def Test(self):
 		"""Convenience function for repetitive testing"""
@@ -360,7 +360,8 @@ class MyFrame(wx.Frame):
 			return data
 
 	def combine_data(self):
-		"""Combine NEXAFS data with Henke and Biggs&Lighthill data."""
+		"""Combine users near-edge data with extended spectrum data."""
+		#TODO do all data scaling using the coeff extended spectrum data (not with the point-wise extended spectrum data)
 		if self.raw_file is not None:
 			print "Convert to scattering factors"
 			raw_Im = self.ConvertData(self.raw_file)
@@ -433,12 +434,26 @@ class MyFrame(wx.Frame):
 				# store background data for plotting
 				cut_boolean_wide = numpy.roll(cut_boolean, -1) + numpy.roll(cut_boolean, 1)
 				self.asf_bg = [[trusted_ind+edge_ind-5, trusted_ind+edge_ind], numpy.vstack((raw_Im[cut_boolean_wide, 0], asf_bg[cut_boolean_wide])).T]
-
+			
 			nexafs_cut = numpy.vstack((raw_Im[cut_boolean, 0], scaled_nexafs_Im[cut_boolean])).T
-			# merge data sets together
+			##Merge point-wise data sets together
 			asf_cut_high = self.total_asf[self.total_asf[:, 0]>splice_eV[1], :]
 			asf_cut_low = self.total_asf[self.total_asf[:, 0]<splice_eV[0], :]
 			self.merged_Im = numpy.vstack((asf_cut_low[:, [0, 2]], (splice_eV[0], splice_asf_Im[0]), nexafs_cut, (splice_eV[1], splice_asf_Im[1]), asf_cut_high[:, [0, 2]]))
+			
+			##Merge coeff data together
+			coeffs_cut_high = self.total_Im_coeffs[self.total_E[:-1]>splice_eV[1],:]
+			coeffs_cut_low = self.total_Im_coeffs[self.total_E[:-1]<splice_eV[0],:]
+			#convert points to coeffs
+			nexafs_coeffs_cut = numpy.zeros((len(nexafs_cut)+1,5))
+			Y = numpy.append(numpy.insert(nexafs_cut[:,1],0,splice_asf_Im[0]),splice_asf_Im[1])
+			nexafs_E = numpy.append(numpy.insert(nexafs_cut[:,0],0,splice_eV[0]),splice_eV[1])
+			M = (Y[1:]-Y[:-1])/(nexafs_E[1:]-nexafs_E[:-1])
+			nexafs_coeffs_cut[:,0] = M
+			nexafs_coeffs_cut[:,1] = Y[:-1]-M*nexafs_E[:-1]
+			#assemble merged coeffs and energy values
+			self.merged_Im_coeffs = numpy.vstack((coeffs_cut_low, nexafs_coeffs_cut, self.total_Im_coeffs[-coeffs_cut_high.shape[0]-2,:], coeffs_cut_high))
+			self.merged_E = numpy.concatenate((self.total_E[self.total_E<splice_eV[0]], nexafs_E, self.total_E[self.total_E>splice_eV[1]]))
 			# Extras for plotting
 			self.splice_ind = (len(asf_cut_low[:, 0]), -len(asf_cut_high[:, 0]))
 			cut_boolean = (splice_eV[0]<=raw_Im[:, 0]) != (raw_Im[:, 0]<=splice_eV[1])
@@ -644,6 +659,7 @@ class MyFrame(wx.Frame):
 			temp_E = numpy.unique(temp_E)
 			# add weighted asf data sets for KK calculation
 			self.total_Im_coeffs = numpy.zeros((len(temp_E)-1, 5))
+			self.total_E = temp_E
 			counters = numpy.zeros((len(self.Z)))
 			for i,E in enumerate(temp_E[1:]):
 				#print "\nE =", E, "\t counters =", counters, "\t compare = ",
