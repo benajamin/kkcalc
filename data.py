@@ -12,6 +12,7 @@
 
 import logging
 import json, numpy
+import re
 
 
 # Constants
@@ -93,6 +94,20 @@ def convert_NEXAFS_to_ASF(raw_data):
 	return raw_Im
 
 def load_Element_Database():
+	"""Loads atomic scattering factor database from a json file.
+	
+	The database has been previously created by PackRawData.py
+	
+	Parameters
+	----------
+	None
+	
+	Returns
+	-------
+	The function returns a dictionary of elements, each consisting of a dictionary
+	of data types
+
+	"""
 	with open('ASF.json','r') as f:
 		Element_Database = json.load(f)
 	for Z in range(1,93):
@@ -100,15 +115,55 @@ def load_Element_Database():
 		Element_Database[str(Z)]['Im'] = numpy.array(Element_Database[str(Z)]['Im'])
 		Element_Database[str(Z)]['Re'] = numpy.array(Element_Database[str(Z)]['Re'])
 	return Element_Database
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+def ConvertElementSymbol(SymbolString):
+	"""Replace list of elemental symbols with the corresponding atomic numbers.
+
+	Parameters
+	----------
+	SymbolString : String representing an elemental symbol
+
+	Returns
+	-------
+	The function returns an integer atomic number corresponding to the input symbol.
+	Zero is returned when the string is not recognised.
+	"""
+	Elements = ['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U']
+	try:
+		AtomicNumber = Elements.index(SymbolString)+1
+	except ValueError:
+		print "\""+SymbolString+"\" is not a known element!"
+		AtomicNumber = 0
+	return AtomicNumber
+
+def ParseChemicalFormula(Formula):
+	"""Parse a chemical formula string to obtain a stoichiometry.
+
+	Parameters
+	----------
+	Formula : string consisting of element symbols, numbers and parentheses
+
+	Returns
+	-------
+	The function returns a list of elemental symbol,number pairs
+	"""
+	Stoichiometry = []
+	m=re.search('((?P<Element>[A-Z][a-z]?)|\((?P<Paren>.*)\))(?P<Number>\d*(\.\d+)?)(?P<Remainder>.*)',Formula)
+	#print m.group('Element'),m.group('Number'),m.group('Paren'),m.group('Remainder')
+	if len(m.group('Number')) is not 0:
+		Number = float(m.group('Number'))
+	else:
+		Number = 1.0
+	if m.group('Element') is not None:
+		Z = ConvertElementSymbol(m.group('Element'))
+		if Z is not 0:
+			Stoichiometry.append([Z,Number])
+	elif len(m.group('Paren')) > 0:
+		Stoichiometry +=[[x[0],x[1]*Number] for x in ParseChemicalFormula(m.group('Paren'))]
+	if len(m.group('Remainder')) is not 0:
+		Stoichiometry += ParseChemicalFormula(m.group('Remainder'))
+	return Stoichiometry
 	
 	
 	
