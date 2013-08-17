@@ -9,121 +9,13 @@
 # For details see LICENSE.txt
 
 """This module implements a GUI using the wxPython toolkit."""
+import logging
+logger = logging.getLogger(__name__)
 
-from wx.lib.fancytext import StaticFancyText
-import math
-import numpy
-import os
-import time  # only for profiling
 import wx
 import wx.lib.plot as plot
-
-import data
-import kk
-
-
-class SaveFrame(wx.Frame):
-
-	def __init__(self, Parent):
-		print Parent.MolecularFormula, Parent.MolecularMass
-		wx.Frame.__init__(self, None, wx.ID_ANY, "Export Data", size=(500, 800))
-		SizerV = wx.BoxSizer(wx.VERTICAL)
-		MetadataBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Metadata"), wx.VERTICAL)
-		SizerV.Add(MetadataBox, 3, wx.GROW)
-
-		SizerH0 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH0.Add(wx.StaticText(self, -1, "Acronym:"))
-		SizerH0.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		MetadataBox.Add(SizerH0, 0, wx.GROW)
-
-		SizerH1 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH1.Add(wx.StaticText(self, -1, "Name:"))
-		SizerH1.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		MetadataBox.Add(SizerH1, 0, wx.GROW)
-
-		SizerH2 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH2.Add(wx.StaticText(self, -1, "Formula:"))
-		SizerH2.Add((1, 1), 1, wx.GROW)
-		SizerH2.Add(wx.StaticText(self, -1, Parent.MolecularFormula, style=wx.ALIGN_RIGHT))
-		MetadataBox.Add(SizerH2, 0, wx.GROW)
-
-		SizerH3 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH3.Add(wx.StaticText(self, -1, "Formula Mass:"))
-		SizerH3.Add((1, 1), 1, wx.GROW)
-		SizerH3.Add(wx.StaticText(self, -1, str(Parent.MolecularMass), style=wx.ALIGN_RIGHT))
-		MetadataBox.Add(SizerH3, 0, wx.GROW)
-
-		SizerH4 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH4.Add(wx.StaticText(self, -1, "Density:"))
-		self.DensityText = wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER)
-		SizerH4.Add(self.DensityText, 1, wx.GROW)
-		SizerH4.Add(StaticFancyText(self, -1, "(g/cm<sup>3</sup>)"))
-		MetadataBox.Add(SizerH4, 0, wx.GROW)
-
-		SizerH5 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH5.Add(wx.StaticText(self, -1, "Reference:"))
-		SizerH5.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		MetadataBox.Add(SizerH5, 0, wx.GROW)
-
-		SizerH6 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH6.Add(wx.StaticText(self, -1, "Source:"))
-		SizerH6.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		MetadataBox.Add(SizerH6, 0, wx.GROW)
-
-		SizerH7 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH7.Add(wx.StaticText(self, -1, "Acquisition:"))
-		SizerH7.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		MetadataBox.Add(SizerH7, 0, wx.GROW)
-
-		SizerH8 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH8.Add(wx.StaticText(self, -1, "Abs. Edge (Resolution):"))
-		SizerH8.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		MetadataBox.Add(SizerH8, 0, wx.GROW)
-
-		SizerH9 = wx.BoxSizer(wx.HORIZONTAL)
-		SizerH9.Add(wx.StaticText(self, -1, "Incidence Angle:"))
-		SizerH9.Add(wx.TextCtrl(self, -1, "", style=wx.ALIGN_RIGHT|wx.TE_PROCESS_ENTER), 1, wx.GROW)
-		SizerH9.Add(wx.StaticText(self, -1, "(\xb0)".decode('ISO8859-1')))
-		MetadataBox.Add(SizerH9, 0, wx.GROW)
-
-		FormatBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Format"), wx.VERTICAL)
-		FormatBox.Add(wx.RadioButton(self, -1, "Scattering Factor", style=wx.RB_GROUP))
-		self.CRIRadio = wx.RadioButton(self, -1, "Complex Refractive Index")
-		FormatBox.Add(self.CRIRadio)
-		FormatBox.Add(wx.RadioButton(self, -1, "Photoabsorption Coefficient"))
-		SizerV.Add(FormatBox, 1, wx.GROW)
-
-		SaveButton = wx.Button(self, -1, "Save")
-		SaveButton.Bind(wx.EVT_BUTTON, self.Save)
-		SizerV.Add(SaveButton, 0, wx.CENTER)
-
-		self.SetSizer(SizerV)			   # add outer sizer to frame
-		self.Fit()
-
-		self.Show(True)
-
-	def Save(self, evt):
-		print "do something"
-		print self.CRIRadio.GetValue(), self.DensityText.GetValue()
-
-		if self.CRIRadio.GetValue():
-			num_value = None
-			try:
-				num_value = float(self.DensityText.GetValue())
-			except ValueError:
-				print "'", self.DensityText.GetValue(), "' is not a number!"
-			if num_value is not None:
-			  print "can safely save"
-		# Get values
-
-		# Convert values
-
-		self.Close(True)  # Close the frame.
-
-		# choose filename
-
-		# write data
-
+import numpy
+import kk, data
 
 
 class MyFrame(wx.Frame):
@@ -142,8 +34,7 @@ class MyFrame(wx.Frame):
 		self.MolecularMass = 1
 		self.asf_bg = None
 		# Get data about elements
-		self.Element_Database = data.load_Element_Database()
-#		self.Elements = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]
+		#self.Element_Database = data.load_Element_Database()
 
 		# Setting up the menus.
 		filemenu = wx.Menu()
@@ -217,10 +108,12 @@ class MyFrame(wx.Frame):
 		DensitySizer.Add(self.DensityText, 1)
 		DensitySizer.Add(wx.StaticText(self, -1, " g/ml"))
 		self.MaterialBox.Add(DensitySizer, 0)
-		self.MaterialBox.Add(wx.StaticText(self, -1, "Stoichiometry: "))
-		self.MaterialBox.contents = []
-		self.add_element()
-		self.MaterialBox.AddStretchSpacer(1)
+		
+		StoichiometrySizer = wx.BoxSizer(wx.HORIZONTAL)
+		StoichiometrySizer.Add(wx.StaticText(self, -1, "Stoichiometry: "))
+		self.StoichiometryText = wx.TextCtrl(self, -1, "", style=wx.TE_PROCESS_ENTER)
+		StoichiometrySizer.Add(self.StoichiometryText, 1)
+		self.MaterialBox.Add(StoichiometrySizer, 0)
 
 		############################Calc box
 		CalcBox = wx.StaticBoxSizer(wx.StaticBox(self, label="Calculation"), wx.VERTICAL)
@@ -232,6 +125,7 @@ class MyFrame(wx.Frame):
 
 		SizerL.Add(DataBox, 0, wx.GROW)
 		SizerL.Add(self.MaterialBox, 1, wx.GROW)
+		SizerL.AddStretchSpacer(1)
 		SizerL.Add(CalcBox, 0, wx.GROW)
 
 
@@ -392,7 +286,7 @@ class MyFrame(wx.Frame):
 			# get start and end Y values from nexafs and asf data
 			splice_nexafs_Im = numpy.interp(splice_eV, raw_Im[:, 0], raw_Im[:, 1])
 			#splice_asf_Im = numpy.interp(splice_eV, self.total_asf[:, 0], self.total_asf[:, 2])
-			splice_asf_Im = (kk.coeffs_to_ASF(splice_eV[0],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[0])[0][-1]]),kk.coeffs_to_ASF(splice_eV[1],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[1])[0][-1]]))
+			splice_asf_Im = (data.coeffs_to_ASF(splice_eV[0],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[0])[0][-1]]),data.coeffs_to_ASF(splice_eV[1],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[1])[0][-1]]))
 			cut_boolean = (splice_eV[0]<raw_Im[:, 0]) == (raw_Im[:, 0]<splice_eV[1])
 			# Merge Y values
 			if not self.AddBackgroundCheckBox.GetValue():
@@ -530,72 +424,6 @@ class MyFrame(wx.Frame):
 		self.Iplot.Draw(plot.PlotGraphics(plotlist_Im, '', '', 'Imaginary'), xAxis=(X_min, X_max), yAxis=(0, Y_Im_max))
 		self.Rplot.Draw(plot.PlotGraphics(plotlist_Re, '', 'Energy (eV)', 'Real'), xAxis=(X_min, X_max), yAxis=(Y_Re_min, Y_Re_max))
 
-	def select_element(self, evt):
-		"""Select an element."""
-		cb = evt.GetEventObject()
-		datalist = []
-		n = 0
-		N = None
-		for box in self.MaterialBox.contents:
-			datalist.append(box[1].GetSelection())
-			if box[1]==cb:
-				N = n
-			n = n+1
-		#print 'datalist =', datalist
-		try:  # check corresponding textctrl and put in a 1 if empty
-			num_value = float(self.MaterialBox.contents[N][2].GetValue())
-		except ValueError:
-			self.MaterialBox.contents[N][2].SetValue("1")
-
-		if evt.GetSelection() is 0:  # might need to remove a box
-			if 0 in datalist and datalist.index(0) != len(datalist)-1:
-				# remove extra boxes
-				dead_box = datalist.index(0)
-				print dead_box
-				# Remove and destroy combobox
-#				self.MaterialBox.contents[dead_box][0].Clear(True)
-				self.MaterialBox.contents[dead_box][0].Detach(0)
-				self.MaterialBox.contents[dead_box][1].Destroy()
-				# Remove and destroy textbox
-				self.MaterialBox.contents[dead_box][0].Detach(0)
-				self.MaterialBox.contents[dead_box][2].Destroy()
-				# Remove (no need to destroy) ElementSizer
-				self.MaterialBox.Remove(dead_box+2)
-				# delete reference to items in saved list
-				self.MaterialBox.contents.remove(self.MaterialBox.contents[dead_box])
-				# adjust GUI layout
-				self.Layout()
-		else:
-			if 0 not in datalist:
-				# add spare box
-				#print 'Add box'
-				self.add_element()
-				self.Layout()
-				if self.MaterialBox.GetSize()[1] < self.MaterialBox.CalcMin()[1]:
-					self.Fit()
-		self.calc_asfdata()
-
-	def add_element(self):
-		"""Add element GUI items."""
-		# make GUI objects
-		element_ComboBox = wx.ComboBox(self, -1, value='', style=wx.CB_READONLY)
-		self.populate_elements(element_ComboBox)
-		element_Text = wx.TextCtrl(self, -1, '', style=wx.TE_PROCESS_ENTER)
-		# put into a sizer
-		ElementSizer = wx.BoxSizer(wx.HORIZONTAL)
-		ElementSizer.contents = (element_ComboBox, element_Text)
-		ElementSizer.Add(element_ComboBox, 1)#, wx.Grow)
-		ElementSizer.Add(element_Text, 1)#, wx.Grow)
-		#print "Insert in materialsbox at:", max(1, len(self.MaterialBox.GetChildren())-2)
-		self.MaterialBox.Insert(max(2, len(self.MaterialBox.GetChildren())-1), ElementSizer, 0, wx.GROW)
-		# various bookkeeping
-		element_ComboBox.Bind(wx.EVT_COMBOBOX, self.select_element)
-#		element_Text.Bind(wx.EVT_TEXT, self.element_Text_check)
-		element_Text.Bind(wx.EVT_KILL_FOCUS, self.element_Text_check)
-		element_Text.Bind(wx.EVT_TEXT_ENTER, self.element_Text_check)
-		self.MaterialBox.contents.append([ElementSizer, element_ComboBox, element_Text])
-		#print "there are now", len(self.MaterialBox.GetChildren())-3, "element boxes"
-
 	def Splice_Text_check(self, evt):
 		self.combine_data()
 		self.plot_data()
@@ -618,11 +446,6 @@ class MyFrame(wx.Frame):
 				print "Execute with", num_value
 				self.calc_asfdata()
 
-	def populate_elements(self, cb):
-		"""Append elements."""
-		cb.Append('')
-		for element in range(1,93):
-			cb.Append(self.Element_Database[str(element)]['symbol'])
 
 	def calc_asfdata(self):
 		"""Calculate atomic scattering factors."""
@@ -644,7 +467,7 @@ class MyFrame(wx.Frame):
 				if num==round(num):num=int(num)
 				if num!=0:
 					self.MolecularFormula = self.MolecularFormula+self.MaterialBox.contents[i][1].GetValue()+str(num)
-					self.MolecularMass = self.MolecularMass+num*float(self.Element_Database[str(self.MaterialBox.contents[i][1].GetSelection())]['mass'])
+					self.MolecularMass = self.MolecularMass+num*float(data.ELEMENT_DATABASE[str(self.MaterialBox.contents[i][1].GetSelection())]['mass'])
 					#print self.MolecularMass
 			except ValueError:
 				pass
@@ -652,7 +475,7 @@ class MyFrame(wx.Frame):
 			# get unique energy points
 			temp_E = numpy.array([])
 			for element in self.Z:
-				temp_E = numpy.concatenate((temp_E, self.Element_Database[str(element)]['E']))
+				temp_E = numpy.concatenate((temp_E, data.ELEMENT_DATABASE[str(element)]['E']))
 			temp_E = numpy.unique(temp_E)
 			# add weighted asf data sets for KK calculation
 			self.total_Im_coeffs = numpy.zeros((len(temp_E)-1, 5))
@@ -662,8 +485,8 @@ class MyFrame(wx.Frame):
 				#print "\nE =", E, "\t counters =", counters, "\t compare = ",
 				sum_Im_coeffs = 0
 				for j in range(len(counters)):
-					sum_Im_coeffs += self.stoichiometry[j]*self.Element_Database[str(self.Z[j])]['Im'][counters[j],:]
-					counters[j] += self.Element_Database[str(self.Z[j])]['E'][counters[j]+1] == E
+					sum_Im_coeffs += self.stoichiometry[j]*data.ELEMENT_DATABASE[str(self.Z[j])]['Im'][counters[j],:]
+					counters[j] += data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]+1] == E
 				self.total_Im_coeffs[i,:] = sum_Im_coeffs
 			# add weighted data sets for plotting
 			Henke_end_index = numpy.where(temp_E==30000)[0][0]+1
@@ -672,14 +495,14 @@ class MyFrame(wx.Frame):
 			counters = numpy.zeros((len(self.Z)))
 			for i in range(Henke_end_index):
 				for j in range(len(self.Z)):
-					if self.Element_Database[str(self.Z[j])]['E'][counters[j]] == temp_E[i]:#keeping pace
-						self.total_asf[i, 1] += self.stoichiometry[j]*self.Element_Database[str(self.Z[j])]['Re'][counters[j]]
+					if data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]] == temp_E[i]:#keeping pace
+						self.total_asf[i, 1] += self.stoichiometry[j]*data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]]
 						counters[j] += 1
 					else: #need to interpolate extra point
 						# Use method of Y = y0 + (y1-y0)*[(X-x0)/(x1-x0)]
-						X_fraction = (temp_E[i] - self.Element_Database[str(self.Z[j])]['E'][counters[j]-1])/(self.Element_Database[str(self.Z[j])]['E'][counters[j]] - self.Element_Database[str(self.Z[j])]['E'][counters[j]-1])
-						self.total_asf[i, 1] += self.stoichiometry[j]*(self.Element_Database[str(self.Z[j])]['Re'][counters[j]-1]+X_fraction*(self.Element_Database[str(self.Z[j])]['Re'][counters[j]]-self.Element_Database[str(self.Z[j])]['Re'][counters[j]-1]))
-			self.total_asf[:, 2] = self.Coeffs_to_ASF(temp_E[:Henke_end_index],self.total_Im_coeffs[:Henke_end_index,:])
+						X_fraction = (temp_E[i] - data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]-1])/(data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]] - data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]-1])
+						self.total_asf[i, 1] += self.stoichiometry[j]*(data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]-1]+X_fraction*(data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]]-data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]-1]))
+			self.total_asf[:, 2] = data.coeffs_to_ASF(temp_E[:Henke_end_index],self.total_Im_coeffs[:Henke_end_index,:])
 		# resplice with raw nexafs data, if any is loaded
 		self.combine_data()
 		# plot asf data
@@ -689,9 +512,7 @@ class MyFrame(wx.Frame):
 		"""Calculate Button."""
 		print "Calculate button"
 		if self.merged_Im is not None:
-			tic = time.time()
 			self.KK_PP()
-			print "Completed in ", round(time.time()-tic, 3), "seconds."
 			self.plot_data()
 
 	def KK_PP(self):

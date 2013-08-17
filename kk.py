@@ -10,23 +10,26 @@
 
 """This module implements the Kramers-Kronig transformation."""
 
-import logging
+import logging, sys
+logger = logging.getLogger(__name__)
+if __name__ == '__main__':
+	logging.basicConfig(level=logging.DEBUG)
+	logging.StreamHandler(stream=sys.stdout)
+
 import math
 import numpy
+import os
+import data
 
 
-def calc_relativistic_correction(Z, stoichiometry):
+def calc_relativistic_correction(stoichiometry):
 	"""Calculate the relativistic correction to the
 	Kramers-Kronig transform.
 
 	Parameters:
 	-----------
-	Z : array of integers
-		The list of elements identified by their atomic number
-		(not mass).
-	stoichiometry : array of integers
-		The list of element counts (i.e. the relative proportions
-		of the elements).
+	stoichiometry : array of integer/float pairs
+		Each pair in the list consists of an atomic number and the relative proportion of that element.
 
 	Returns
 	-------
@@ -35,29 +38,9 @@ def calc_relativistic_correction(Z, stoichiometry):
 
 	"""
 	correction = 0
-	for z, s in zip(Z, stoichiometry):
-		correction += (z - (z/82.5)**2.37) * s
+	for z, n in stoichiometry:
+		correction += (z - (z/82.5)**2.37) * n
 	return correction
-
-
-def coeffs_to_ASF(E, coeffs):
-	"""Calculate Henke scattering factors from polynomial coefficients.
-
-	Parameters
-	----------
-	E : float
-		Energy in eV
-	coeffs : array of floats
-		PECS in cm^2/atom
-
-	Returns
-	-------
-	The function returns the magnitude of the imaginary
-	part of the atomic scattering factors at energy `E`.
-
-	"""
-	return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
-
 
 
 def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
@@ -104,3 +87,49 @@ def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
 	logger.debug("Done!")
 	return KK_Re
 
+def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, merge_points=None, add_background=False, fix_distortions=False):
+	"""Do all data loading and processing and then calculate the kramers-Kronig transform.
+	Parameters
+	----------
+	NearEdgeDataFile : string
+		Path to file containg near-edge data
+	ChemicalFormula : string
+		A standard chemical formula string consisting of element symbols, numbers and parentheses.
+	merge_points : list or tuple pair of `float` values, or None
+		The photon energy values (low, high) at which thenear-edge and scattering factor data values
+		are set equal so as to ensure continuity of the merged data set.
+
+	Returns
+	-------
+	This function returns a numpy array with columns consisting of the photon energy, the real and the imaginary parts of the scattering factors.
+	"""
+	Stoichiometry = data.ParseChemicalFormula(ChemicalFormula)
+	Relativistic_Correction = calc_relativistic_correction(Stoichiometry)
+	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
+	NearEdge_Data = data.load_data(NearEdgeDataFile, load_options)
+	Full_E, Imaginary_Spectrum = data.merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=merge_points, add_background=add_background, fix_distortions=fix_distortions)
+	Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
+	
+	Imaginary_Spectrum_Values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
+	return numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T
+
+if __name__ == '__main__':
+	#use argparse here to get command line arguments
+	#process arguments and pass to a pythonic function
+	
+	#for initial testing, just call pythonic function
+	#logging.basicConfig(level=logging.DEBUG)
+	#logging.StreamHandler(stream=sys.stdout)
+	Output = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14')
+	
+	import matplotlib
+	matplotlib.use('WXAgg')
+	import pylab
+	
+	pylab.figure()
+	pylab.plot(Output[:,0],Output[:,1],'xg-',Output[:,0],Output[:,2],'xb-')
+	pylab.xscale('log')
+	pylab.show()
+	
+	
+	
