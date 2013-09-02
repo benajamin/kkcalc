@@ -70,7 +70,7 @@ def coeffs_to_ASF(E, coeffs):
 	else:
 		return coeffs[:,0]*E + coeffs[:,1] + coeffs[:,2]/E + coeffs[:,3]/(E**2) + coeffs[:,4]/(E**3)
 
-def convert_Beta_to_ASF(raw_data, density):
+def convert_Beta_to_ASF(raw_data, density=None, reverse=False):
 	"""Convert Beta data (index of refraction) to atomic scattering
 	factors (ASF).
 
@@ -81,6 +81,8 @@ def convert_Beta_to_ASF(raw_data, density):
 	----------
 	raw_data : two-dimensional `numpy.array` of `float`
 		The array consists of two columns: Energy and magnitude.
+	reverse : boolean
+		flag to indicate the reverse conversion
 
 	Returns
 	-------
@@ -89,8 +91,15 @@ def convert_Beta_to_ASF(raw_data, density):
 	part of the atomic scattering factors.
 
 	"""
-	raw_Im = raw_data[:, :2].copy()
-	raw_Im[:, 1] = density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:, 0]**2*raw_data[:, 1]/(self.MolecularMass*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)
+	if density is None:
+		logger.info("Material density required for conversions involving Beta, assuming value of 1 g/ml.")
+		density = 1.0
+	if reverse:
+		raw_Im = raw_data[:, :2].copy()
+		raw_Im[:, 1] = (density*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)*raw_data[:, 1]/density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:, 0]**2
+	else:
+		raw_Im = raw_data[:, :2].copy()
+		raw_Im[:, 1] = density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:, 0]**2*raw_data[:, 1]/(density*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)
 	return raw_Im
 
 
@@ -122,13 +131,15 @@ def convert_BL_to_ASF(E, coeffs, Atomic_mass):
 	return (coeffs[0] + coeffs[1]/(E*0.001) + coeffs[2]/((E*0.001)**2) + coeffs[3]/((E*0.001)**3))*Atomic_mass/(2*AVOGADRO_CONSTANT*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*0.1
 
 
-def convert_NEXAFS_to_ASF(raw_data):
+def convert_NEXAFS_to_ASF(raw_data, reverse=False):
 	"""Convert NEXAFS photoabsorption data to atomic scattering factors (ASF).
 
 	Parameters
 	----------
 	raw_data : two-dimensional `numpy.array` of `float`
 		The array consists of two columns: Energy and magnitude.
+	reverse : boolean
+		flag to indicate the reverse conversion
 
 	Returns
 	-------
@@ -137,8 +148,12 @@ def convert_NEXAFS_to_ASF(raw_data):
 	part of the atomic scattering factors.
 
 	"""
-	raw_Im = raw_data[:, :2].copy()
-	raw_Im[:, 1] = raw_data[:, 0]*raw_data[:, 1]/(2*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)
+	if reverse:
+		raw_Im = raw_data[:, :2].copy()
+		raw_Im[:, 1] = (2*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)*raw_data[:, 1]/raw_data[:, 0]
+	else:
+		raw_Im = raw_data[:, :2].copy()
+		raw_Im[:, 1] = raw_data[:, 0]*raw_data[:, 1]/(2*CLASSICAL_ELECTRON_RADIUS*PLANCKS_CONSTANT*SPEED_OF_LIGHT)
 	return raw_Im
 
 
@@ -191,7 +206,7 @@ def ParseChemicalFormula(Formula,recursion_flag=False):
 	return Stoichiometry
 	
 	
-def load_data(filename, load_options):
+def load_data(filename, load_options=None):
 	"""Read a standard ASCII file and return a list of lists of floats.
 	
 	Parameters
@@ -226,22 +241,34 @@ def load_data(filename, load_options):
 			data_column = int(load_options['data_column'])
 		else:
 			data_column = data.shape[1]-1
-		if isinstance(load_options,dict) and load_options.has_key('convert_from'):
-			data_type = load_options['convert_from']
-		else:
-			data_type = 'photoabsorption'
-		if data_type == 'photoabsorption':
-			converted_data = convert_NEXAFS_to_ASF(data[:,[E_column,data_column]])
-		if data_type == 'beta':
-			if isinstance(load_options,dict) and load_options.has_key('density'):
-				density = load_options['density']
-			else:
-				density = 1.0
-				logger.warn("Assuming material density of 1 gcm^-3 for conversion from Beta to ASF.")
-			converted_data = convert_Beta_to_ASF(data[:,[E_column,data_column]],density)
-		if data_type == 'asf':
-			converted_data = data[:,[E_column,data_column]]
-		return converted_data
+		return data[:,[E_column,data_column]]
+	
+def convert_data(Data, FromType, ToType, Density=None):
+	"""Switchyard function for converting between data types.
+	
+	Parameters
+	----------
+	Data : a numpy array with two columns: Photon energy and absorption data values
+	FromType : string describing input data type
+	ToType : string describing desired output data type
+
+	Returns
+	-------
+	The function returns a numpy array with two columns: Photon energy and absorption data values
+"""
+	logger.info("Convert data from "+FromType+" to "+ToType+".")
+	if FromType.lower() in ['photoabsorption', 'nexafs', 'xanes']:
+		converted_data = convert_NEXAFS_to_ASF(Data)
+	elif FromType.lower() in ['beta']:
+		converted_data = convert_Beta_to_ASF(Data, density=density)
+	else: #if already ASF
+		converted_data = Data.copy()
+	#data should now be in terms of ASF
+	if ToType.lower() in ['photoabsorption', 'nexafs', 'xanes']:
+		converted_data = convert_NEXAFS_to_ASF(converted_data, reverse=True)
+	elif ToType.lower() in ['beta']:
+		converted_data = convert_Beta_to_ASF(converted_data, density=density, reverse=True)
+	return converted_data
 	
 	
 def calculate_asf(Stoichiometry):
@@ -266,37 +293,59 @@ def calculate_asf(Stoichiometry):
 			total_Im_coeffs[i,:] = sum_Im_coeffs
 		return total_E, total_Im_coeffs
 
-def merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=None, add_background=False, fix_distortions=False):
+def merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=None, add_background=False, fix_distortions=False, plotting_extras=False):
 	logger.info("Merge near-edge data with wide-range scattering factor data")
 	if merge_points is None:
 		merge_points = NearEdge_Data[[0,-1],0]
 	NearEdge_merge_ind = [numpy.where(NearEdge_Data[:,0] > merge_points[0])[0][0], numpy.where(NearEdge_Data[:,0] < merge_points[1])[0][-1]]
-	asf_merge_ind = [numpy.where(ASF_E > merge_points[0])[0][0]-1, numpy.where(ASF_E > merge_points[1])[0][0]-1]
 	NearEdge_merge_values = numpy.interp(merge_points, NearEdge_Data[:,0], NearEdge_Data[:,1])
-	NearEdge_Data = numpy.vstack(((merge_points[0],NearEdge_merge_values[0]),NearEdge_Data[NearEdge_merge_ind[0]:NearEdge_merge_ind[1],:],(merge_points[1],NearEdge_merge_values[1])))
-	asf_merge_values = [coeffs_to_ASF(merge_points[0], ASF_Data[asf_merge_ind[0],:]), coeffs_to_ASF(merge_points[1], ASF_Data[asf_merge_ind[1],:])]
-	if add_background:
-		logger.error("Not implemented!")
-		#get pre-edge region
-		#extrapolate background
+	if ASF_Data is not None:
+		#asf_merge_ind = [0,1]
+##		asf_merge_values = NearEdge_merge_values
+	#else:
+		asf_merge_ind = [numpy.where(ASF_E > merge_points[0])[0][0]-1, numpy.where(ASF_E > merge_points[1])[0][0]-1]
+		asf_merge_values = [coeffs_to_ASF(merge_points[0], ASF_Data[asf_merge_ind[0],:]), coeffs_to_ASF(merge_points[1], ASF_Data[asf_merge_ind[1],:])]
+		if add_background:
+			logger.error("Not implemented!")
+			#get pre-edge region
+			#extrapolate background
+			scaled_NearEdge_Data = numpy.vstack((NearEdge_Data[:,0],((NearEdge_Data[:, 1]-NearEdge_merge_values[0])*scale)+asf_merge_values[0])).T
+		else:
+			scale = (asf_merge_values[1]-asf_merge_values[0])/(NearEdge_merge_values[1]-NearEdge_merge_values[0])
+			scaled_NearEdge_Data = numpy.vstack((NearEdge_Data[:,0],((NearEdge_Data[:, 1]-NearEdge_merge_values[0])*scale)+asf_merge_values[0])).T
+		if fix_distortions:
+			logger.error("Not implemented!")
+			#use fitting function to estimate curvature
 	else:
-		scale = (asf_merge_values[1]-asf_merge_values[0])/(NearEdge_merge_values[1]-NearEdge_merge_values[0])
-		NearEdge_Data[:,1] = ((NearEdge_Data[:, 1]-NearEdge_merge_values[0])*scale)+asf_merge_values[0]
-	if fix_distortions:
-		logger.error("Not implemented!")
-		#use fitting function to estimate curvature
-	
+		scaled_NearEdge_Data = NearEdge_Data.copy()
+		asf_merge_values = NearEdge_merge_values.copy()
+	plot_scaled_NearEdge_Data = scaled_NearEdge_Data.copy()
+	scaled_NearEdge_Data = numpy.vstack(((merge_points[0],asf_merge_values[0]),scaled_NearEdge_Data[NearEdge_merge_ind[0]:NearEdge_merge_ind[1]+1,:],(merge_points[1],asf_merge_values[1])))
+
 	#Now convert point values to coefficients
-	NearEdge_Coeffs = numpy.zeros((len(NearEdge_Data),5))
-	M = (NearEdge_Data[1:,1]-NearEdge_Data[:-1,1])/(NearEdge_Data[1:,0]-NearEdge_Data[:-1,0])
+	NearEdge_Coeffs = numpy.zeros((len(scaled_NearEdge_Data),5))
+	M = (scaled_NearEdge_Data[1:,1]-scaled_NearEdge_Data[:-1,1])/(scaled_NearEdge_Data[1:,0]-scaled_NearEdge_Data[:-1,0])
 	NearEdge_Coeffs[:-1,0] = M
-	NearEdge_Coeffs[:-1,1] = NearEdge_Data[:-1,1]-M*NearEdge_Data[:-1,0]
-	NearEdge_Coeffs[-1,:] = ASF_Data[asf_merge_ind[1],:]
-	#Paste data sections together
-	Full_E = numpy.hstack((ASF_E[0:asf_merge_ind[0]],NearEdge_Data[:,0],ASF_E[asf_merge_ind[1]+1:]))
-	Full_Coeffs = numpy.vstack((ASF_Data[0:asf_merge_ind[0],:],NearEdge_Coeffs,ASF_Data[asf_merge_ind[1]+1:,:]))
+	NearEdge_Coeffs[:-1,1] = scaled_NearEdge_Data[:-1,1]-M*scaled_NearEdge_Data[:-1,0]
+	if ASF_Data is None:
+		NearEdge_Coeffs = NearEdge_Coeffs[0:-1,:]
+		#NearEdge_Coeffs[-1,:] = NearEdge_Coeffs[-2,:]
+		#Paste data sections together
+		Full_E = scaled_NearEdge_Data[:,0]
+		Full_Coeffs = NearEdge_Coeffs
+		splice_points = [0,len(Full_E)-1]
+	else:
+		NearEdge_Coeffs[-1,:] = ASF_Data[asf_merge_ind[1],:]
+		#Paste data sections together
+		Full_E = numpy.hstack((ASF_E[0:asf_merge_ind[0]],scaled_NearEdge_Data[:,0],ASF_E[asf_merge_ind[1]+1:]))
+		Full_Coeffs = numpy.vstack((ASF_Data[0:asf_merge_ind[0],:],NearEdge_Coeffs,ASF_Data[asf_merge_ind[1]+1:,:]))
+		#print "Check is", scaled_NearEdge_Data[-1,0]
+		splice_points = [asf_merge_ind[0], asf_merge_ind[0]-1+len(scaled_NearEdge_Data[:,0])]
 	
-	return Full_E, Full_Coeffs
+	if plotting_extras:
+		return Full_E, Full_Coeffs, plot_scaled_NearEdge_Data, splice_points
+	else:
+		return Full_E, Full_Coeffs
 	
 	
 	

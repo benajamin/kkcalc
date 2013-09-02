@@ -23,8 +23,7 @@ import data
 
 
 def calc_relativistic_correction(stoichiometry):
-	"""Calculate the relativistic correction to the
-	Kramers-Kronig transform.
+	"""Calculate the relativistic correction to the Kramers-Kronig transform.
 
 	Parameters:
 	-----------
@@ -87,7 +86,7 @@ def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
 	logger.debug("Done!")
 	return KK_Re
 
-def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, merge_points=None, add_background=False, fix_distortions=False):
+def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, input_data_type=None, merge_points=None, add_background=False, fix_distortions=False):
 	"""Do all data loading and processing and then calculate the kramers-Kronig transform.
 	Parameters
 	----------
@@ -106,7 +105,7 @@ def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, merg
 	Stoichiometry = data.ParseChemicalFormula(ChemicalFormula)
 	Relativistic_Correction = calc_relativistic_correction(Stoichiometry)
 	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
-	NearEdge_Data = data.load_data(NearEdgeDataFile, load_options)
+	NearEdge_Data = data.convert_data(data.load_data(NearEdgeDataFile, load_options),FromType=input_data_type,ToType='asf')
 	Full_E, Imaginary_Spectrum = data.merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=merge_points, add_background=add_background, fix_distortions=fix_distortions)
 	Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
 	
@@ -118,9 +117,7 @@ if __name__ == '__main__':
 	#process arguments and pass to a pythonic function
 	
 	#for initial testing, just call pythonic function
-	#logging.basicConfig(level=logging.DEBUG)
-	#logging.StreamHandler(stream=sys.stdout)
-	Output = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14')
+	Output = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
 	
 	import matplotlib
 	matplotlib.use('WXAgg')

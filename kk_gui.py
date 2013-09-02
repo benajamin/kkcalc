@@ -11,10 +11,15 @@
 """This module implements a GUI using the wxPython toolkit."""
 import logging
 logger = logging.getLogger(__name__)
+if __name__ == '__main__':
+	import sys
+	logging.basicConfig(level=logging.DEBUG)
+	logging.StreamHandler(stream=sys.stdout)
 
 import wx
 import wx.lib.plot as plot
 import numpy
+import os
 import kk, data
 
 
@@ -30,11 +35,20 @@ class MyFrame(wx.Frame):
 		self.total_Im_coeffs = None
 		self.merged_Im = None
 		self.nexafs_CutOut = []
-		self.KK_Re = None
 		self.MolecularMass = 1
 		self.asf_bg = None
-		# Get data about elements
-		#self.Element_Database = data.load_Element_Database()
+		#New set of variables to initialise. All those above might want to be removed.
+		self.ChemicalFormula = None
+		self.Stoichiometry = None
+		self.Relativistic_Correction = None
+		self.NearEdgeData = None
+		self.splice_ind = None
+		self.ASF_E = None
+		self.ASF_Data = None
+		self.Full_E = None
+		self.Imaginary_Spectrum = None
+		self.KK_Real_Spectrum = None
+
 
 		# Setting up the menus.
 		filemenu = wx.Menu()
@@ -91,6 +105,9 @@ class MyFrame(wx.Frame):
 		self.AddBackgroundCheckBox = wx.CheckBox(self, -1, "Add background")
 		self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
 		DataBox.Add(self.AddBackgroundCheckBox, 0)
+		self.FixDistortionsCheckBox = wx.CheckBox(self, -1, "Fix distortions")
+		self.FixDistortionsCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
+		DataBox.Add(self.FixDistortionsCheckBox, 0)
 		# Background_CloseSizer.Add(self.AddBackgroundCheckBox, 0)
 		# self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.MergeAdd_check)
 		# Background_CloseSizer.AddStretchSpacer(1)
@@ -112,6 +129,8 @@ class MyFrame(wx.Frame):
 		StoichiometrySizer = wx.BoxSizer(wx.HORIZONTAL)
 		StoichiometrySizer.Add(wx.StaticText(self, -1, "Stoichiometry: "))
 		self.StoichiometryText = wx.TextCtrl(self, -1, "", style=wx.TE_PROCESS_ENTER)
+		self.StoichiometryText.Bind(wx.EVT_KILL_FOCUS, self.Stoichiometry_Text_check)
+		self.StoichiometryText.Bind(wx.EVT_TEXT_ENTER, self.Stoichiometry_Text_check)
 		StoichiometrySizer.Add(self.StoichiometryText, 1)
 		self.MaterialBox.Add(StoichiometrySizer, 0)
 
@@ -131,14 +150,13 @@ class MyFrame(wx.Frame):
 
 
 
-		self.Iplot = plot.PlotCanvas(self)
-		self.Rplot = plot.PlotCanvas(self)
+		self.PlotAxes = plot.PlotCanvas(self)
 
-		SizerR.Add(self.Iplot, 1, wx.GROW)
-		SizerR.Add(self.Rplot, 1, wx.GROW)
+		SizerR.Add(self.PlotAxes, 1, wx.GROW)
+		#SizerR.Add(self.Rplot, 1, wx.GROW)
 		# enable the zoom feature (drag a box around area of interest)
-		self.Iplot.SetEnableZoom(True)
-		self.Rplot.SetEnableZoom(True)
+		self.PlotAxes.SetEnableZoom(True)
+		#self.Rplot.SetEnableZoom(True)
 
 
 		Sizer1.Add(SizerL, 1, wx.GROW)
@@ -156,7 +174,7 @@ class MyFrame(wx.Frame):
 		self.filename = "NC-Xy_norm_bgsub.txt"
 		self.dirname = "data"
 		self.FileText.SetLabel("File: "+self.filename)
-		self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
+		#self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
 		self.AddBackgroundCheckBox.SetValue(True)
 		self.combine_data()
 		self.PP_AlgorithmRadio.SetValue(True)
@@ -184,245 +202,207 @@ class MyFrame(wx.Frame):
 		dlg.Destroy()
 		if success:
 			self.FileText.SetLabel("File: "+self.filename)
-			self.raw_file = self.LoadData(os.path.join(self.dirname, self.filename))
-
+			self.raw_file = data.load_data(os.path.join(self.dirname, self.filename))
 			self.combine_data()
 			self.plot_data()
 
-	def ConvertData(self, raw_data):
-		if len(raw_data) != 0:
-			data_type = self.DataTypeCombo.GetSelection()
-			if data_type == 1:  # Beta
-				print "Convert from Beta (type=", data_type, ") to Scattering Factors."
-				density = float(self.DensityText.GetValue())
-				raw_Im = data.convert_Beta_to_ASF(raw_data, density)
-			elif data_type == 2:  # Scattering factor
-				print "Data is already in terms of Scattering Factors (type=", data_type, ")."
-			else:  # (data_type == 0 or -1) Assume Photoabsorption data
-				print "Convert NEXAFS photoabsorption data to Scattering Factors."
-				raw_Im = data.convert_NEXAFS_to_ASF(raw_data)
-			return raw_Im
-
 	def OnHelp(self, e):
-		print "Opening web browser for help files."
+		logger.info("Opening web browser for help files.")
 		import webbrowser
 		webbrowser.open("KKcalc.html")
 
 	def OnSave(self, e):
 		"""Write data to file."""
-		print "Save"
+		logger.info("Save")
 		f = SaveFrame(self)
-		print "done!"
-		if self.KK_Re is not None:
+		logger.info("done!")
+		if self.KK_Real_Spectrum is not None:
 			fd = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 			if fd.ShowModal()==wx.ID_OK:
 				outfile = open(os.path.join(fd.GetDirectory(), fd.GetFilename()), "w")
 				outfile.write('Scattering factors for '+self.MolecularFormula+'\n')
 				outfile.write('E(eV)\tf1\tf2\n')
 				for i in xrange(len(self.merged_Im[:, 0])):
-	#				outfile.write("{0}\t{1}\t{2}\n".format(self.merged_Im[i, 0], self.KK_Re[i], self.merged_Im[i, 1]))  # Python 3.0 style
-					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.merged_Im[i, 0], 'Re':self.KK_Re[i], 'Im':self.merged_Im[i, 1]})  # old formatting style
+	#				outfile.write("{0}\t{1}\t{2}\n".format(self.merged_Im[i, 0], self.KK_Real_Spectrum[i], self.merged_Im[i, 1]))  # Python 3.0 style
+					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.merged_Im[i, 0], 'Re':self.KK_Real_Spectrum[i], 'Im':self.merged_Im[i, 1]})  # old formatting style
 				outfile.close()
-			print "Scattering factors for", self.MolecularFormula, "saved to ", fd.GetFilename()
+			logger.info("Scattering factors for"+self.MolecularFormula+"saved to "+fd.GetFilename())
 		else:
-			print "Nothing to save."
-
-	def LoadData(self, filename):
-		"""Read a standard ASCII file and return a list of lists of floats."""
-		data = []
-		if os.path.isfile(filename):
-			for line in open(filename):
-				try:
-					data.append([float(f) for f in line.split()])
-				except ValueError:
-					pass
-			data = numpy.array(data)
-		else:
-			print "Error:", filename, "is not a valid file name."
-		if len(data)==0:
-			print "Error: no data found in", filename
-			return []
-		else:
-			return data
+			logger.info("Nothing to save.")
 
 	def combine_data(self):
 		"""Combine users near-edge data with extended spectrum data."""
 		if self.raw_file is not None:
-			print "Convert to scattering factors"
-			raw_Im = self.ConvertData(self.raw_file)
-		print "Combine Data"
+			logger.info("Convert to scattering factors")
+			self.NearEdgeData = data.convert_data(self.raw_file,self.DataTypeCombo.GetValue(),'ASF')
+		logger.info("Combine Data")
 		# Get splice points
-		splice_eV = numpy.array([10, 30000])  # Henke limits
+		splice_eV = numpy.array([10.0, 30000.0])  # Henke limits
 		if self.SpliceText1.GetValue() == "Start":
 			if self.raw_file is not None:
-				splice_eV[0] = raw_Im[0, 0]
+				splice_eV[0] = self.NearEdgeData[0, 0]
 		else:
 			splice_eV[0] = float(self.SpliceText1.GetValue())
 		if self.SpliceText2.GetValue() == "End":
 			if self.raw_file is not None:
-				splice_eV[1] = raw_Im[-1, 0]
+				splice_eV[1] = self.NearEdgeData[-1, 0]
 		else:
 			splice_eV[1] = float(self.SpliceText2.GetValue())
+		if self.raw_file is not None and self.ASF_Data is None:
+			print "nothing"
+			self.Full_E, self.Imaginary_Spectrum, self.NearEdgeData, self.splice_ind  = data.merge_spectra(self.NearEdgeData, self.ASF_E, self.ASF_Data, merge_points=splice_eV, add_background=self.AddBackgroundCheckBox.GetValue(), plotting_extras=True)
 
-		if self.raw_file is not None and self.total_asf is None:
-			splice_nexafs_Im = numpy.interp(splice_eV, raw_Im[:, 0], raw_Im[:, 1])
-			cut_boolean = (splice_eV[0]<raw_Im[:, 0]) == (raw_Im[:, 0]<splice_eV[1])
-			nexafs_cut = raw_Im[cut_boolean]
-			self.merged_Im = numpy.vstack(((splice_eV[0], splice_nexafs_Im[0]), nexafs_cut, (splice_eV[1], splice_nexafs_Im[1])))
-			# Extras for plotting
-			self.splice_ind = (0, -1)
-			cut_boolean = (splice_eV[0]<=raw_Im[:, 0]) != (raw_Im[:, 0]<=splice_eV[1])
-			self.nexafs_CutOut = raw_Im[cut_boolean]
-			self.asf_bg = None  # We won't be using this variable this time
+		elif self.raw_file is None and self.ASF_Data is not None:
+			self.Full_E = self.ASF_E
+			self.Imaginary_Spectrum = self.ASF_Data
 
-		elif self.raw_file is None and self.total_asf is not None:
-			self.merged_Im = self.total_asf[:, [0, 2]]
-			# Extras for plotting
-			self.splice_ind = (0, -1)
-			self.nexafs_CutOut = None
-			self.asf_bg = None  # We won't be using this variable this time
-
-		elif self.raw_file is not None and self.total_asf is not None:
-			# get start and end Y values from nexafs and asf data
-			splice_nexafs_Im = numpy.interp(splice_eV, raw_Im[:, 0], raw_Im[:, 1])
-			#splice_asf_Im = numpy.interp(splice_eV, self.total_asf[:, 0], self.total_asf[:, 2])
-			splice_asf_Im = (data.coeffs_to_ASF(splice_eV[0],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[0])[0][-1]]),data.coeffs_to_ASF(splice_eV[1],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[1])[0][-1]]))
-			cut_boolean = (splice_eV[0]<raw_Im[:, 0]) == (raw_Im[:, 0]<splice_eV[1])
-			# Merge Y values
-			if not self.AddBackgroundCheckBox.GetValue():
-				print "Merge data sets"
-				scale = (splice_asf_Im[1]-splice_asf_Im[0])/(splice_nexafs_Im[1]-splice_nexafs_Im[0])
-				scaled_nexafs_Im = ((raw_Im[:, 1]-splice_nexafs_Im[0])*scale)+splice_asf_Im[0]
-				self.asf_bg = None  # We won't be using this variable this time
-			else:
-				print "Add data sets (this will currently only work at energies below 30 keV)"
-				# Set up background function
-				# We trust this point to be just before the absorption edge
-				trusted_ind = max(0, numpy.where(self.total_asf[:, 0]>splice_eV[0])[0][0]-1)
-				Log_total_asf = numpy.log(self.total_asf[:, 2])
-				# Lets trust the 5 points before our trusted point and make an initial guess at the background function
-				p = numpy.polyfit(self.total_asf[(trusted_ind-5):trusted_ind, 0], Log_total_asf[(trusted_ind-5):trusted_ind], 1)
-				# Now lets look for the points up util the absorption edge
-				p_vals = numpy.exp(numpy.polyval(p, self.total_asf[(trusted_ind-5):-1, 0]))
-				p_err = max(p_vals[0:5]-self.total_asf[(trusted_ind-5):trusted_ind, 2])
-				edge_ind = numpy.where(self.total_asf[trusted_ind:-1, 2]-p_vals[4:-1]>p_err*10)
-				if len(edge_ind[0])!=0:
-					edge_ind = edge_ind[0][0]
-				else:
-					edge_ind = trusted_ind
-				# Redo background using the 5 points before the background point
-				p = numpy.polyfit(self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind, 0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind], 1)
-				asf_bg = numpy.exp(numpy.polyval(p, raw_Im[:, 0]))
-				print "Background defined as: y=exp(%(p1)ex %(p0)+e)" % {"p1":p[1], "p0":p[0]}
-				# Apply background function
-				scale = (splice_asf_Im[1]-numpy.exp(numpy.polyval(p, splice_eV[1])))/splice_nexafs_Im[1]
-				scaled_nexafs_Im = raw_Im[:, 1]*scale+asf_bg
-				# store background data for plotting
-				cut_boolean_wide = numpy.roll(cut_boolean, -1) + numpy.roll(cut_boolean, 1)
-				self.asf_bg = [[trusted_ind+edge_ind-5, trusted_ind+edge_ind], numpy.vstack((raw_Im[cut_boolean_wide, 0], asf_bg[cut_boolean_wide])).T]
+		elif self.raw_file is not None and self.ASF_Data is not None:
 			
-			nexafs_cut = numpy.vstack((raw_Im[cut_boolean, 0], scaled_nexafs_Im[cut_boolean])).T
-			##Merge point-wise data sets together
-			asf_cut_high = self.total_asf[self.total_asf[:, 0]>splice_eV[1], :]
-			asf_cut_low = self.total_asf[self.total_asf[:, 0]<splice_eV[0], :]
-			self.merged_Im = numpy.vstack((asf_cut_low[:, [0, 2]], (splice_eV[0], splice_asf_Im[0]), nexafs_cut, (splice_eV[1], splice_asf_Im[1]), asf_cut_high[:, [0, 2]]))
+			self.Full_E, self.Imaginary_Spectrum, self.NearEdgeData, self.splice_ind  = data.merge_spectra(self.NearEdgeData, self.ASF_E, self.ASF_Data, merge_points=splice_eV, add_background=self.AddBackgroundCheckBox.GetValue(), fix_distortions=self.FixDistortionsCheckBox.GetValue(), plotting_extras=True)
+
+			### get start and end Y values from nexafs and asf data
+			##splice_nexafs_Im = numpy.interp(splice_eV, raw_Im[:, 0], raw_Im[:, 1])
+			###splice_asf_Im = numpy.interp(splice_eV, self.total_asf[:, 0], self.total_asf[:, 2])
+			##splice_asf_Im = (data.coeffs_to_ASF(splice_eV[0],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[0])[0][-1]]),data.coeffs_to_ASF(splice_eV[1],self.total_Im_coeffs[numpy.where(self.total_E<splice_eV[1])[0][-1]]))
+			##cut_boolean = (splice_eV[0]<raw_Im[:, 0]) == (raw_Im[:, 0]<splice_eV[1])
+			### Merge Y values
+			##if not self.AddBackgroundCheckBox.GetValue():
+				##logger.info("Merge data sets")
+				##scale = (splice_asf_Im[1]-splice_asf_Im[0])/(splice_nexafs_Im[1]-splice_nexafs_Im[0])
+				##scaled_nexafs_Im = ((raw_Im[:, 1]-splice_nexafs_Im[0])*scale)+splice_asf_Im[0]
+				##self.asf_bg = None  # We won't be using this variable this time
+			##else:
+				##logger.info("Add data sets (this will currently only work at energies below 30 keV)")
+				### Set up background function
+				### We trust this point to be just before the absorption edge
+				##trusted_ind = max(0, numpy.where(self.total_asf[:, 0]>splice_eV[0])[0][0]-1)
+				##Log_total_asf = numpy.log(self.total_asf[:, 2])
+				### Lets trust the 5 points before our trusted point and make an initial guess at the background function
+				##p = numpy.polyfit(self.total_asf[(trusted_ind-5):trusted_ind, 0], Log_total_asf[(trusted_ind-5):trusted_ind], 1)
+				### Now lets look for the points up util the absorption edge
+				##p_vals = numpy.exp(numpy.polyval(p, self.total_asf[(trusted_ind-5):-1, 0]))
+				##p_err = max(p_vals[0:5]-self.total_asf[(trusted_ind-5):trusted_ind, 2])
+				##edge_ind = numpy.where(self.total_asf[trusted_ind:-1, 2]-p_vals[4:-1]>p_err*10)
+				##if len(edge_ind[0])!=0:
+					##edge_ind = edge_ind[0][0]
+				##else:
+					##edge_ind = trusted_ind
+				### Redo background using the 5 points before the background point
+				##p = numpy.polyfit(self.total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind, 0], Log_total_asf[(trusted_ind+edge_ind-5):trusted_ind+edge_ind], 1)
+				##asf_bg = numpy.exp(numpy.polyval(p, raw_Im[:, 0]))
+				##logger.info("Background defined as: y=exp(%(p1)ex %(p0)+e)" % {"p1":p[1], "p0":p[0]})
+				### Apply background function
+				##scale = (splice_asf_Im[1]-numpy.exp(numpy.polyval(p, splice_eV[1])))/splice_nexafs_Im[1]
+				##scaled_nexafs_Im = raw_Im[:, 1]*scale+asf_bg
+				### store background data for plotting
+				##cut_boolean_wide = numpy.roll(cut_boolean, -1) + numpy.roll(cut_boolean, 1)
+				##self.asf_bg = [[trusted_ind+edge_ind-5, trusted_ind+edge_ind], numpy.vstack((raw_Im[cut_boolean_wide, 0], asf_bg[cut_boolean_wide])).T]
 			
-			##Merge coeff data together
-			coeffs_cut_high = self.total_Im_coeffs[self.total_E[:-1]>splice_eV[1],:]
-			coeffs_cut_low = self.total_Im_coeffs[self.total_E[:-1]<splice_eV[0],:]
-			#convert points to coeffs
-			nexafs_coeffs_cut = numpy.zeros((len(nexafs_cut)+1,5))
-			Y = numpy.append(numpy.insert(nexafs_cut[:,1],0,splice_asf_Im[0]),splice_asf_Im[1])
-			nexafs_E = numpy.append(numpy.insert(nexafs_cut[:,0],0,splice_eV[0]),splice_eV[1])
-			M = (Y[1:]-Y[:-1])/(nexafs_E[1:]-nexafs_E[:-1])
-			nexafs_coeffs_cut[:,0] = M
-			nexafs_coeffs_cut[:,1] = Y[:-1]-M*nexafs_E[:-1]
-			#assemble merged coeffs and energy values
-			self.merged_Im_coeffs = numpy.vstack((coeffs_cut_low, nexafs_coeffs_cut, self.total_Im_coeffs[-coeffs_cut_high.shape[0]-2,:], coeffs_cut_high))
-			self.merged_E = numpy.concatenate((self.total_E[self.total_E<splice_eV[0]], nexafs_E, self.total_E[self.total_E>splice_eV[1]]))
-			# Extras for plotting
-			self.splice_ind = (len(asf_cut_low[:, 0]), -len(asf_cut_high[:, 0]))
-			cut_boolean = (splice_eV[0]<=raw_Im[:, 0]) != (raw_Im[:, 0]<=splice_eV[1])
-			self.nexafs_CutOut = numpy.vstack((raw_Im[cut_boolean, 0], scaled_nexafs_Im[cut_boolean])).T
-		# Previous calculation of f_1 is no longer matching displayed f_2 data
-		self.KK_Re = None
+			##nexafs_cut = numpy.vstack((raw_Im[cut_boolean, 0], scaled_nexafs_Im[cut_boolean])).T
+			####Merge point-wise data sets together
+			##asf_cut_high = self.total_asf[self.total_asf[:, 0]>splice_eV[1], :]
+			##asf_cut_low = self.total_asf[self.total_asf[:, 0]<splice_eV[0], :]
+			##self.merged_Im = numpy.vstack((asf_cut_low[:, [0, 2]], (splice_eV[0], splice_asf_Im[0]), nexafs_cut, (splice_eV[1], splice_asf_Im[1]), asf_cut_high[:, [0, 2]]))
+			
+			####Merge coeff data together
+			##coeffs_cut_high = self.total_Im_coeffs[self.total_E[:-1]>splice_eV[1],:]
+			##coeffs_cut_low = self.total_Im_coeffs[self.total_E[:-1]<splice_eV[0],:]
+			###convert points to coeffs
+			##nexafs_coeffs_cut = numpy.zeros((len(nexafs_cut)+1,5))
+			##Y = numpy.append(numpy.insert(nexafs_cut[:,1],0,splice_asf_Im[0]),splice_asf_Im[1])
+			##nexafs_E = numpy.append(numpy.insert(nexafs_cut[:,0],0,splice_eV[0]),splice_eV[1])
+			##M = (Y[1:]-Y[:-1])/(nexafs_E[1:]-nexafs_E[:-1])
+			##nexafs_coeffs_cut[:,0] = M
+			##nexafs_coeffs_cut[:,1] = Y[:-1]-M*nexafs_E[:-1]
+			###assemble merged coeffs and energy values
+			##self.merged_Im_coeffs = numpy.vstack((coeffs_cut_low, nexafs_coeffs_cut, self.total_Im_coeffs[-coeffs_cut_high.shape[0]-2,:], coeffs_cut_high))
+			##self.merged_E = numpy.concatenate((self.total_E[self.total_E<splice_eV[0]], nexafs_E, self.total_E[self.total_E>splice_eV[1]]))
+			### Extras for plotting
+			##self.splice_ind = (len(asf_cut_low[:, 0]), -len(asf_cut_high[:, 0]))
+			##cut_boolean = (splice_eV[0]<=raw_Im[:, 0]) != (raw_Im[:, 0]<=splice_eV[1])
+			##self.nexafs_CutOut = numpy.vstack((raw_Im[cut_boolean, 0], scaled_nexafs_Im[cut_boolean])).T
+		### Previous calculation of f_1 is no longer matching displayed f_2 data
+		##self.KK_Real_Spectrum = None
 
 	def plot_data(self):
 		"""Plot data.
-		TODO: redesign how the plotting is done to be based on the coefficient based data, so that plotting isn't limited to 30 keV.
+		
+		Parameters:
+		-----------
+		self.Full_E : vector of floats 
+			photon energies at which the real and imaginary scattering factor data will be plotted.
+		self.Imaginary_Spectrum : Array of float 
+			polynomial coefficients that can be evaluated to give the values of the imaginary scattering factors.
+		self.KK_Real_Spectrumal_Spectrum : vector of float 
+			the values of the real scattering factors.
+
+		Returns
+		-------
+		The GUI is updated, but nothing is returned.
 		"""
-		print "plotting data"
+		logger.info("plotting data")
 		# List of things to plot
-		plotlist_Im = []
-		plotlist_Re = []
+		plotlist = []
 		# get initial guess at X limits
 		X_min = 0
 		X_max = 30000
-		Y_Im_max = 1
-		Y_Im_min = 0
-		Y_Re_max = 1
-		Y_Re_min = 0
-		if self.raw_file is not None:
-			X_min = self.raw_file[0, 0]
-			X_max = self.raw_file[-1, 0]
+		Y_max = 1
+		Y_min = 0
+		if self.NearEdgeData is not None:
+			X_min = self.NearEdgeData[0, 0]
+			X_max = self.NearEdgeData[-1, 0]
 		if self.SpliceText1.GetValue() != "Start":
 			X_min = float(self.SpliceText1.GetValue())
 		if self.SpliceText2.GetValue() != "End":
 			X_max = float(self.SpliceText2.GetValue())
-		if self.raw_file is not None:
-			print "plot raw data only"
+		if self.Imaginary_Spectrum is not None:
+			Im_values = data.coeffs_to_ASF(self.Full_E, numpy.vstack((self.Imaginary_Spectrum,self.Imaginary_Spectrum[-1])))
+			plotlist.append(plot.PolyLine(zip(self.Full_E, Im_values), colour='black', width=1))
 			# get Y limits
-			Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], 1])
-			Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], 1])
-			#print self.merged_Im
-			plotlist_Im.append(plot.PolyLine(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], :], colour='blue', width=1))  # User data
-			if len(self.nexafs_CutOut)!=0:
-				plotlist_Im.append(plot.PolyMarker(self.nexafs_CutOut, colour='blue', marker='cross', size=1))
-			if self.asf_bg is not None:
-				plotlist_Im.append(plot.PolyMarker(self.total_asf[self.asf_bg[0][0]:self.asf_bg[0][1], [0, 2]], colour='red', marker='cross', size=1))
-				plotlist_Im.append(plot.PolyLine(self.asf_bg[1], colour='red', width=1))
-
-		if self.total_asf is not None:
-			if self.raw_file is not None:
-				print "plot everything"
-				# get Y limits
-				Y_Im_max = max(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], 1])
-				Y_Im_min = min(self.merged_Im[self.splice_ind[0]:self.splice_ind[1], 1])
-				plotlist_Im.append(plot.PolyLine(self.merged_Im[0:(self.splice_ind[0]+1), :], colour='black', width=1))  # Low energy Henke data
-				plotlist_Im.append(plot.PolyLine(self.merged_Im[(self.splice_ind[1]-1):-1, :], colour='black', width=1))  # High energy Henke data
+			if self.splice_ind is None:
+				Y_max = max(Im_values)
+				Y_min = min(Im_values)
 			else:
-				print "plot asf data only"
-				Y_Im_max = max(self.total_asf[(X_min<=self.total_asf[:, 0])==(self.total_asf[:, 0]<=X_max), 2])
-				Y_Im_min = min(self.total_asf[(X_min<=self.total_asf[:, 0])==(self.total_asf[:, 0]<=X_max), 2])
-				plotlist_Im.append(plot.PolyLine(self.total_asf[:, [0, 2]], colour='black', width=1))
+				Y_max = max(Im_values[self.splice_ind[0]:self.splice_ind[1]])
+				Y_min = min(Im_values[self.splice_ind[0]:self.splice_ind[1]])
+		if self.NearEdgeData is not None:
+			Y_max = max(self.NearEdgeData[:,1])
+			Y_min = min(self.NearEdgeData[:,1])
+			plotlist.append(plot.PolyMarker(zip(self.NearEdgeData[:,0], self.NearEdgeData[:,1]), colour='blue', marker='plus', size=1))
+			
+		if self.splice_ind is not None:
+			splice_values = data.coeffs_to_ASF(self.Full_E[self.splice_ind], self.Imaginary_Spectrum[[self.splice_ind[0],min(self.splice_ind[1],self.Imaginary_Spectrum.shape[0]-1)]])
+			plotlist.append(plot.PolyMarker(zip(self.Full_E[self.splice_ind], splice_values), colour='red', marker='cross', size=1))
 
 
-			# Real axes
-			total_asf_CUT = (X_min<=self.total_asf[:, 0])==(self.total_asf[:, 0]<=X_max)
-			Y_Re_max = max(self.total_asf[total_asf_CUT, 1])
-			rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
-			Y_Re_min = min(self.total_asf[total_asf_CUT & (self.total_asf[:, 1]>-100*rel_corr), 1])
-			plotlist_Re.append(plot.PolyLine(self.total_asf[:, [0, 1]], colour='black', width=1))
-		if self.KK_Re is not None:
-			Y_Re_max = max(Y_Re_max, max(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
-			Y_Re_min = min(Y_Re_min, min(self.KK_Re[self.splice_ind[0]:self.splice_ind[1]]))
-			plotlist_Re.append(plot.PolyLine(numpy.vstack((self.merged_E, self.KK_Re)).T, colour='green', width=1))
+		if self.raw_file is not None and self.Imaginary_Spectrum is None:
+			logger.info("plot raw data only")
+			plotlist.append(plot.PolyLine(self.NearEdgeData, colour='blue', width=1))  # User data
+			if self.asf_bg is not None:
+				plotlist.append(plot.PolyMarker(self.total_asf[self.asf_bg[0][0]:self.asf_bg[0][1], [0, 2]], colour='red', marker='cross', size=1))
+				plotlist.append(plot.PolyLine(self.asf_bg[1], colour='red', width=1))
+
+			# Real part
+			#plotlist.append(plot.PolyLine(self.total_asf[:, [0, 1]], colour='black', width=1))
+		if self.KK_Real_Spectrum is not None:
+			Y_max = max(Y_max, max(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
+			Y_min = min(Y_min, min(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
+			plotlist.append(plot.PolyLine(zip(self.Full_E, self.KK_Real_Spectrum), colour='green', width=1))
 
 		# Expand plotting limits for prettiness
 		window_width = X_max-X_min
 		X_max = X_max+window_width*0.1
 		X_min = max(X_min-window_width*0.1, 0)
-		window_Im_height = Y_Im_max-Y_Im_min
-		window_Re_height = Y_Re_max-Y_Re_min
-		Y_Im_max = Y_Im_max+window_Im_height*0.1
-		Y_Im_min = Y_Im_min-window_Im_height*0.1
-		Y_Re_max = Y_Re_max+window_Re_height*0.1
-		Y_Re_min = Y_Re_min-window_Re_height*0.1
+		window_Im_height = Y_max-Y_min
+		window_Re_height = Y_max-Y_min
+		Y_max = Y_max+window_Im_height*0.1
+		Y_min = Y_min-window_Im_height*0.1
+		Y_max = Y_max+window_Re_height*0.1
+		Y_min = Y_min-window_Re_height*0.1
 		# set up text, axis and draw
-		#print plotlist_Im
-		#print X_min, X_max, Y_Im_min, Y_Im_max
-		self.Iplot.Draw(plot.PlotGraphics(plotlist_Im, '', '', 'Imaginary'), xAxis=(X_min, X_max), yAxis=(0, Y_Im_max))
-		self.Rplot.Draw(plot.PlotGraphics(plotlist_Re, '', 'Energy (eV)', 'Real'), xAxis=(X_min, X_max), yAxis=(Y_Re_min, Y_Re_max))
+		#print plotlist
+		#print X_min, X_max, Y_min, Y_max
+		self.PlotAxes.Draw(plot.PlotGraphics(plotlist, '', 'Energy (eV)', 'Magnitude'), xAxis=(X_min, X_max), yAxis=(0, Y_max))
 
 	def Splice_Text_check(self, evt):
 		self.combine_data()
@@ -432,105 +412,24 @@ class MyFrame(wx.Frame):
 		self.combine_data()
 		self.plot_data()
 
-	def element_Text_check(self, evt):
-		tb = evt.GetEventObject()
-		num_value = None
-		try:
-			num_value = float(tb.GetValue())
-		except ValueError:
-			print "'", tb.GetValue(), "' is not a number!"
-		if num_value != None and numpy.isfinite(num_value):
-			if num_value < 0:
-				print tb.GetValue(), " is not a positive number!"
-			else:
-				print "Execute with", num_value
-				self.calc_asfdata()
-
-
-	def calc_asfdata(self):
-		"""Calculate atomic scattering factors."""
-		print "Calculate total asf data"
-		# start from clean slate
-		self.total_asf_Re = None
-		self.total_asf_Im = None
-		# get element list
-		self.stoichiometry = []
-		self.Z = []
-		self.MolecularFormula = ""
-		self.MolecularMass = 0
-		for i in range(len(self.MaterialBox.contents)-1):
-			try:  # sanitise inputs
-				self.stoichiometry.append(float(self.MaterialBox.contents[i][2].GetValue()))
-				self.Z.append(int(self.MaterialBox.contents[i][1].GetSelection()))  # Need Z for relativistic correction
-				# Construct molecular formula for savefile header
-				num = self.stoichiometry[-1]
-				if num==round(num):num=int(num)
-				if num!=0:
-					self.MolecularFormula = self.MolecularFormula+self.MaterialBox.contents[i][1].GetValue()+str(num)
-					self.MolecularMass = self.MolecularMass+num*float(data.ELEMENT_DATABASE[str(self.MaterialBox.contents[i][1].GetSelection())]['mass'])
-					#print self.MolecularMass
-			except ValueError:
-				pass
-		if len(self.stoichiometry)!=0:
-			# get unique energy points
-			temp_E = numpy.array([])
-			for element in self.Z:
-				temp_E = numpy.concatenate((temp_E, data.ELEMENT_DATABASE[str(element)]['E']))
-			temp_E = numpy.unique(temp_E)
-			# add weighted asf data sets for KK calculation
-			self.total_Im_coeffs = numpy.zeros((len(temp_E)-1, 5))
-			self.total_E = temp_E
-			counters = numpy.zeros((len(self.Z)))
-			for i,E in enumerate(temp_E[1:]):
-				#print "\nE =", E, "\t counters =", counters, "\t compare = ",
-				sum_Im_coeffs = 0
-				for j in range(len(counters)):
-					sum_Im_coeffs += self.stoichiometry[j]*data.ELEMENT_DATABASE[str(self.Z[j])]['Im'][counters[j],:]
-					counters[j] += data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]+1] == E
-				self.total_Im_coeffs[i,:] = sum_Im_coeffs
-			# add weighted data sets for plotting
-			Henke_end_index = numpy.where(temp_E==30000)[0][0]+1
-			self.total_asf = numpy.zeros((Henke_end_index, 3))
-			self.total_asf[:, 0] = temp_E[:Henke_end_index]
-			counters = numpy.zeros((len(self.Z)))
-			for i in range(Henke_end_index):
-				for j in range(len(self.Z)):
-					if data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]] == temp_E[i]:#keeping pace
-						self.total_asf[i, 1] += self.stoichiometry[j]*data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]]
-						counters[j] += 1
-					else: #need to interpolate extra point
-						# Use method of Y = y0 + (y1-y0)*[(X-x0)/(x1-x0)]
-						X_fraction = (temp_E[i] - data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]-1])/(data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]] - data.ELEMENT_DATABASE[str(self.Z[j])]['E'][counters[j]-1])
-						self.total_asf[i, 1] += self.stoichiometry[j]*(data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]-1]+X_fraction*(data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]]-data.ELEMENT_DATABASE[str(self.Z[j])]['Re'][counters[j]-1]))
-			self.total_asf[:, 2] = data.coeffs_to_ASF(temp_E[:Henke_end_index],self.total_Im_coeffs[:Henke_end_index,:])
-		# resplice with raw nexafs data, if any is loaded
+	def Stoichiometry_Text_check(self, evt):
+		self.ChemicalFormula = self.StoichiometryText.GetValue()
+		self.Stoichiometry = data.ParseChemicalFormula(self.ChemicalFormula)
+		self.Relativistic_Correction = kk.calc_relativistic_correction(self.Stoichiometry)
+		self.ASF_E, self.ASF_Data = data.calculate_asf(self.Stoichiometry)
 		self.combine_data()
-		# plot asf data
 		self.plot_data()
+
+
 
 	def calculate(self, button):
 		"""Calculate Button."""
-		print "Calculate button"
-		if self.merged_Im is not None:
-			self.KK_PP()
+		logger.debug("Calculate button")
+		if self.Imaginary_Spectrum is not None:
+			logger.info("Calculate Kramers-Kronig transform (PP)")
+			self.KK_Real_Spectrum = kk.KK_PP(self.Full_E, self.Imaginary_Spectrum, self.Relativistic_Correction)
+			logger.info("Done!")
 			self.plot_data()
-
-	def KK_PP(self):
-		"""Calculate Kramers-Kronig transform with "Piecewise Polynomial" algorithm.
-
-		"""
-		print "Calculate Kramers-Kronig transform (PP)"
-		rel_corr = kk.calc_relativistic_correction(self.Z, self.stoichiometry)
-		self.KK_Re = kk.KK_PP(self.merged_E, self.merged_Im_coeffs, rel_corr)
-		print "Done!"
-
-	def Coeffs_to_ASF(self, E, coeffs):
-		"""Calculate Henke scattering factors from polynomial coefficients.
-
-		{E in eV and PECS in cm^2/atom}.
-
-		"""
-		return coeffs[:,0]*E + coeffs[:,1] + coeffs[:,2]/E + coeffs[:,3]/(E**2) + coeffs[:,4]/(E**3)
 
 
 
