@@ -214,19 +214,20 @@ class MyFrame(wx.Frame):
 	def OnSave(self, e):
 		"""Write data to file."""
 		logger.info("Save")
-		f = SaveFrame(self)
-		logger.info("done!")
 		if self.KK_Real_Spectrum is not None:
+			MolecularFormula = self.StoichiometryText.GetValue()
+			FormulaMass = data.calculate_FormulaMass(self.Stoichiometry)
 			fd = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 			if fd.ShowModal()==wx.ID_OK:
 				outfile = open(os.path.join(fd.GetDirectory(), fd.GetFilename()), "w")
-				outfile.write('Scattering factors for '+self.MolecularFormula+'\n')
+				outfile.write('Scattering factors for '+MolecularFormula+'\n')
+				outfile.write('Formula mass = '+str(FormulaMass)+'\n')
 				outfile.write('E(eV)\tf1\tf2\n')
-				for i in xrange(len(self.merged_Im[:, 0])):
-	#				outfile.write("{0}\t{1}\t{2}\n".format(self.merged_Im[i, 0], self.KK_Real_Spectrum[i], self.merged_Im[i, 1]))  # Python 3.0 style
-					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.merged_Im[i, 0], 'Re':self.KK_Real_Spectrum[i], 'Im':self.merged_Im[i, 1]})  # old formatting style
+				for i in xrange(len(self.Imaginary_Spectrum[:, 0])):
+	#				outfile.write("{0}\t{1}\t{2}\n".format(self.Full_E[i], self.KK_Real_Spectrum[i], self.Imaginary_Spectrum[i, 1]))  # Python 3.0 style
+					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.Full_E[i], 'Re':self.KK_Real_Spectrum[i], 'Im':data.coeffs_to_ASF(self.Full_E[i], self.Imaginary_Spectrum[i,:])})  # 2.x formatting style
 				outfile.close()
-			logger.info("Scattering factors for"+self.MolecularFormula+"saved to "+fd.GetFilename())
+			logger.info("Scattering factors for "+MolecularFormula+" saved to "+fd.GetFilename())
 		else:
 			logger.info("Nothing to save.")
 

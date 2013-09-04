@@ -186,6 +186,8 @@ def ParseChemicalFormula(Formula,recursion_flag=False):
 	Returns
 	-------
 	The function returns a list of elemental symbol,number pairs
+	
+	TODO: return understood formula (i.e. input strign with errors removed)
 	"""
 	if not recursion_flag:
 		logger.info("Parsing '"+Formula+"' as a chemical formula")
@@ -205,6 +207,20 @@ def ParseChemicalFormula(Formula,recursion_flag=False):
 		Stoichiometry += ParseChemicalFormula(m.group('Remainder'),recursion_flag=True)
 	return Stoichiometry
 	
+def calculate_FormulaMass(Stoichiometry):
+	"""Sum atomic masses
+	Parameters
+	-------
+	Stoichiometry : a list of elemental symbol,number pairs
+
+	Returns
+	-------
+	The function returns the fomula mass as a float
+	"""
+	FormulaMass = 0
+	for element, number in Stoichiometry:
+		FormulaMass += number*ELEMENT_DATABASE[str(element)]['mass']
+	return FormulaMass
 	
 def load_data(filename, load_options=None):
 	"""Read a standard ASCII file and return a list of lists of floats.
