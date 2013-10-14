@@ -17,7 +17,7 @@ Workflow to accomodate:
 1. Read data from .nff files and BL files.
 2. Combine Henke and BL data sets.
 3. Convert to useful format for internal use.
-4. Pickle and write to file for distribution.
+4. Write to json file for distribution.
 5. Load data for use by KKcalc.
 6. Combine data for different elements as selected by user.
  a) figure out energy values (abscissa).

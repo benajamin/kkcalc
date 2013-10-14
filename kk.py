@@ -95,7 +95,7 @@ def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, inpu
 	ChemicalFormula : string
 		A standard chemical formula string consisting of element symbols, numbers and parentheses.
 	merge_points : list or tuple pair of `float` values, or None
-		The photon energy values (low, high) at which thenear-edge and scattering factor data values
+		The photon energy values (low, high) at which the near-edge and scattering factor data values
 		are set equal so as to ensure continuity of the merged data set.
 
 	Returns
@@ -110,21 +110,31 @@ def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, inpu
 	Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
 	
 	Imaginary_Spectrum_Values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
-	return numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T
+	return numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T, Imaginary_Spectrum
 
 if __name__ == '__main__':
 	#use argparse here to get command line arguments
 	#process arguments and pass to a pythonic function
 	
-	#for initial testing, just call pythonic function
-	Output = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
+	#I will abuse this section of code for initial testing
+	#Output, Im = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
+	Output, Im = kk_calculate_real('data/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True)
+	#Output, Im = kk_calculate_real('data/As.xmu.csv', 'GaAs', input_data_type='NEXAFS', fix_distortions=True)
+	
+	ASF_E, ASF_Data = data.calculate_asf(data.ParseChemicalFormula('LaAlO3'))
+	#ASF_E, ASF_Data = data.calculate_asf(data.ParseChemicalFormula('GaAs'))
+	ASF_Data2 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data,ASF_Data[-1])))
+	#Im_vals2 = data.coeffs_to_ASF(Output[1::,0], Im)
 	
 	import matplotlib
 	matplotlib.use('WXAgg')
 	import pylab
 	
 	pylab.figure()
+	#pylab.plot([ 38522.87, 41258.87], [0.66327639165181085, 3.4081646761417437], 'og')
 	pylab.plot(Output[:,0],Output[:,1],'xg-',Output[:,0],Output[:,2],'xb-')
+	pylab.plot(ASF_E,ASF_Data2,'or-')
+	#pylab.plot(Output[1::,0],Im_vals2,'*y')
 	pylab.xscale('log')
 	pylab.show()
 	

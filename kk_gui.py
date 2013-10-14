@@ -22,6 +22,13 @@ import numpy
 import os
 import kk, data
 
+try:
+	import scipy.optimize
+	SCIPY_FLAG = True
+except ImportError:
+	SCIPY_FLAG = False
+	logger.info('Failed to import the scipy.optimize module - disabling the \'fix distortions\' checkbox.')
+
 
 class MyFrame(wx.Frame):
 
@@ -102,11 +109,17 @@ class MyFrame(wx.Frame):
 		DataBox.Add(SpliceSizer, 1, wx.GROW)
 
 		# Background_CloseSizer = wx.BoxSizer(wx.HORIZONTAL)
+#		self.InvertDataCheckBox = wx.CheckBox(self, -1, "Invert Data")
+#		self.InvertDataCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
+#		DataBox.Add(self.InvertDataCheckBox, 0)
 		self.AddBackgroundCheckBox = wx.CheckBox(self, -1, "Add background")
 		self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
 		DataBox.Add(self.AddBackgroundCheckBox, 0)
 		self.FixDistortionsCheckBox = wx.CheckBox(self, -1, "Fix distortions")
 		self.FixDistortionsCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
+		if not SCIPY_FLAG:
+			self.FixDistortionsCheckBox.Disable()
+			self.FixDistortionsCheckBox.SetToolTip(wx.ToolTip("Install the SciPy module to use this feature"))
 		DataBox.Add(self.FixDistortionsCheckBox, 0)
 		# Background_CloseSizer.Add(self.AddBackgroundCheckBox, 0)
 		# self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.MergeAdd_check)
@@ -233,9 +246,13 @@ class MyFrame(wx.Frame):
 
 	def combine_data(self):
 		"""Combine users near-edge data with extended spectrum data."""
+		self.Full_E = None
+		self.Imaginary_Spectrum = None
 		if self.raw_file is not None:
 			logger.info("Convert to scattering factors")
 			self.NearEdgeData = data.convert_data(self.raw_file,self.DataTypeCombo.GetValue(),'ASF')
+#			if self.InvertDataCheckBox.GetValue():
+#				self.NearEdgeData[:,1] =  numpy.abs(self.NearEdgeData[:,1] - 2*numpy.mean(self.NearEdgeData[:,1]))
 		logger.info("Combine Data")
 		# Get splice points
 		splice_eV = numpy.array([10.0, 30000.0])  # Henke limits
@@ -334,7 +351,7 @@ class MyFrame(wx.Frame):
 			photon energies at which the real and imaginary scattering factor data will be plotted.
 		self.Imaginary_Spectrum : Array of float 
 			polynomial coefficients that can be evaluated to give the values of the imaginary scattering factors.
-		self.KK_Real_Spectrumal_Spectrum : vector of float 
+		self.KK_Real_Spectrum : vector of float 
 			the values of the real scattering factors.
 
 		Returns
@@ -359,6 +376,12 @@ class MyFrame(wx.Frame):
 		if self.Imaginary_Spectrum is not None:
 			Im_values = data.coeffs_to_ASF(self.Full_E, numpy.vstack((self.Imaginary_Spectrum,self.Imaginary_Spectrum[-1])))
 			plotlist.append(plot.PolyLine(zip(self.Full_E, Im_values), colour='black', width=1))
+			
+			#boundary_ind = numpy.where(self.Full_E==30000)[0][0]
+			#print self.Full_E[boundary_ind], Im_values[boundary_ind], self.Imaginary_Spectrum[boundary_ind,:]
+			#print self.Full_E[boundary_ind+1], Im_values[boundary_ind+1], self.Imaginary_Spectrum[boundary_ind+1,:]
+			#print self.Full_E[boundary_ind+2], Im_values[boundary_ind+2], self.Imaginary_Spectrum[boundary_ind+2,:]
+			
 			# get Y limits
 			if self.splice_ind is None:
 				Y_max = max(Im_values)
@@ -386,8 +409,12 @@ class MyFrame(wx.Frame):
 			# Real part
 			#plotlist.append(plot.PolyLine(self.total_asf[:, [0, 1]], colour='black', width=1))
 		if self.KK_Real_Spectrum is not None:
-			Y_max = max(Y_max, max(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
-			Y_min = min(Y_min, min(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
+			if self.splice_ind is None:
+				Y_max = max(self.KK_Real_Spectrum)
+				Y_min = min(self.KK_Real_Spectrum)
+			else:
+				Y_max = max(Y_max, max(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
+				Y_min = min(Y_min, min(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
 			plotlist.append(plot.PolyLine(zip(self.Full_E, self.KK_Real_Spectrum), colour='green', width=1))
 
 		# Expand plotting limits for prettiness
@@ -404,6 +431,7 @@ class MyFrame(wx.Frame):
 		#print plotlist
 		#print X_min, X_max, Y_min, Y_max
 		self.PlotAxes.Draw(plot.PlotGraphics(plotlist, '', 'Energy (eV)', 'Magnitude'), xAxis=(X_min, X_max), yAxis=(0, Y_max))
+		print "Plotlist =", len(plotlist)
 
 	def Splice_Text_check(self, evt):
 		self.combine_data()
@@ -414,10 +442,17 @@ class MyFrame(wx.Frame):
 		self.plot_data()
 
 	def Stoichiometry_Text_check(self, evt):
-		self.ChemicalFormula = self.StoichiometryText.GetValue()
-		self.Stoichiometry = data.ParseChemicalFormula(self.ChemicalFormula)
-		self.Relativistic_Correction = kk.calc_relativistic_correction(self.Stoichiometry)
-		self.ASF_E, self.ASF_Data = data.calculate_asf(self.Stoichiometry)
+		if len(self.StoichiometryText.GetValue()) == 0:
+			self.ChemicalFormula = None
+			self.Stoichiometry = None
+			self.Relativistic_Correction = None
+			self.ASF_E = None
+			self.ASF_Data = None
+		else:
+			self.ChemicalFormula = self.StoichiometryText.GetValue()
+			self.Stoichiometry = data.ParseChemicalFormula(self.ChemicalFormula)
+			self.Relativistic_Correction = kk.calc_relativistic_correction(self.Stoichiometry)
+			self.ASF_E, self.ASF_Data = data.calculate_asf(self.Stoichiometry)
 		self.combine_data()
 		self.plot_data()
 
