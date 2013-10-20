@@ -374,13 +374,10 @@ class MyFrame(wx.Frame):
 		if self.SpliceText2.GetValue() != "End":
 			X_max = float(self.SpliceText2.GetValue())
 		if self.Imaginary_Spectrum is not None:
-			Im_values = data.coeffs_to_ASF(self.Full_E, numpy.vstack((self.Imaginary_Spectrum,self.Imaginary_Spectrum[-1])))
-			plotlist.append(plot.PolyLine(zip(self.Full_E, Im_values), colour='black', width=1))
-			
-			#boundary_ind = numpy.where(self.Full_E==30000)[0][0]
-			#print self.Full_E[boundary_ind], Im_values[boundary_ind], self.Imaginary_Spectrum[boundary_ind,:]
-			#print self.Full_E[boundary_ind+1], Im_values[boundary_ind+1], self.Imaginary_Spectrum[boundary_ind+1,:]
-			#print self.Full_E[boundary_ind+2], Im_values[boundary_ind+2], self.Imaginary_Spectrum[boundary_ind+2,:]
+			scale = sum([Z*count for Z, count in self.Stoichiometry])
+			print 0.001*scale
+			Im_energies, Im_values = data.coeffs_to_linear(self.Full_E, self.Imaginary_Spectrum, 0.001*scale)
+			plotlist.append(plot.PolyLine(zip(Im_energies,Im_values), colour='black', width=1))
 			
 			# get Y limits
 			if self.splice_ind is None:

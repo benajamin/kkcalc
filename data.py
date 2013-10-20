@@ -12,7 +12,7 @@
 
 import logging
 logger = logging.getLogger(__name__)
-import json, os
+import json, os, warnings
 import numpy, re
 
 
@@ -407,7 +407,110 @@ def merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=None, add_backgro
 		return Full_E, Full_Coeffs
 	
 	
+def coeffs_to_linear(E, coeffs, threshold):
+	"""Convert a curved data set (described by polynomial coefficients) to an approximate data set composed of linear segments.
+	   This should be useful for plotting
 	
+	Parameters
+	----------
+	E : 1D numpy array listing the starting photon energies for each spectrum segment.
+	coeffs: nx5 numpy array in which each row lists the polynomial coefficients describing the shape of the spectrum in that segment.
+	threshold: scalar value indicating the maximum amount of error to be tolerated.
 	
+	Returns
+	-------
+	linear_E: 1D numpy array listing the starting photon energies of the segments that the spectrum is broken up into.
+	linear_Vals: 1D numpy array listing the  intensity values corresponding to the energies listed in linear_E.
+	"""
+	logger.info("Linearise data for plotting.")
+	curvature = 2*coeffs[:,2]/(E[0:-1]**3) + 6*coeffs[:,3]/(E[0:-1]**4) + 12*coeffs[:,4]/(E[0:-1]**5)
+	linear_E = numpy.array([])
+	linear_Vals = numpy.array([])
+	for i in xrange(len(E)-1):
+		linear_E = numpy.append(linear_E, E[i])
+		linear_Vals = numpy.append(linear_Vals, coeffs_to_ASF(E[i],coeffs[i]))
+		if not numpy.all(coeffs[i,2::] == [0,0,0]):
+			new_points = split_segment_recursively(E[i], E[i+1], coeffs[i], threshold)
+			#print new_points
+			if new_points is not None:
+				for p in new_points:
+					linear_E = numpy.append(linear_E, p[0])
+					linear_Vals = numpy.append(linear_Vals, p[1])
+	linear_E = numpy.append(linear_E, E[-1])
+	linear_Vals = numpy.append(linear_Vals, coeffs_to_ASF(E[-1],coeffs[-1]))
+	return linear_E, linear_Vals
+
+def split_segment_recursively(E1, E2, coeffs, threshold):
+	"""Recursively use split_segment() to divide a spectrum segment until all points along the piecewise linear representation
+	is within 'threshold' of the curve defined by 'coeffs'.
 	
+	Parameters
+	----------
+	E1 : Energy value at the start of the segment.
+	E2 : Energy value at the end of the segment.
+	coeffs: 1x5 numpy array listing the polynomial coefficients describing the shape of the spectrum in that segment.
+	threshold: scalar value indicating the maximum amount of error to be tolerated.
 	
+	Returns
+	-------
+	The function returns a list of energy, magnitude tuples representing an approximation of the curve described by 'coeffs'.
+	"""
+	new_point = split_segment(E1, E2, coeffs)
+	if new_point is not None and new_point[2] > threshold:
+		#print new_point
+		point_list = []
+		new_point_2 = split_segment_recursively(E1, new_point[0], coeffs, threshold)#recursively check first half
+		if new_point_2 is not None:
+			point_list = point_list + new_point_2
+		point_list.append(new_point[0:2])
+		new_point_3 = split_segment_recursively(new_point[0], E2, coeffs, threshold)#recursively check second half
+		if new_point_3 is not None:
+			point_list = point_list + new_point_3
+		return point_list
+	else:
+		return None
+
+def split_segment(E1, E2, coeffs):
+	"""Calculate which point in a spectrum segment shows the greatest error when represented by a straight line.
+	
+	Parameters
+	----------
+	E1 : Energy value at the start of the segment.
+	E2 : Energy value at the end of the segment.
+	coeffs: 1x5 numpy array listing the polynomial coefficients describing the shape of the spectrum in that segment.
+	
+	Returns
+	-------
+	The function returns the energy, magnitude and error value corresponding to the point at which the greatest error occurs.
+	"""
+	vals = [coeffs_to_ASF(E1, coeffs), coeffs_to_ASF(E2, coeffs)]
+	m = (vals[1] - vals[0])/(E2 - E1)
+	a = m-coeffs[0]
+	b = 0.0
+	c = coeffs[2]
+	d = 2*coeffs[3]
+	e = 3*coeffs[4]
+	
+	# see http://en.wikipedia.org/wiki/Quartic_function#General_formula_for_roots
+	D0 = c**2-3*b*d+12*a*e
+	D1 = 2*c**3-9*b*c*d+27*b**2*e+27*a*d**2-72*a*c*e
+	p = (8*a*c-3*b**2)/(8.0*a**2)
+	q = (b**3-4*a*b*c+8*a**2*d)/(8.0*a**3)
+	Q_cubed = (D1+(D1**2-4*D0**3)**0.5)*0.5
+	Q = numpy.sign(Q_cubed)*abs(Q_cubed)**(1/3.0)
+	S = 0.5*(-3*p/2.0+1/(3.0*a)*(Q+D0/Q))**0.5
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore")
+		#This line will generate warnings when failing to calculate complex roots properly, but we only care about real roots anyway. 
+		roots = numpy.array([-b/(4.0*a)-S+0.5*(-4*S**2-2*p+q/S)**0.5, -b/(4.0*a)-S-0.5*(-4*S**2-2*p+q/S)**0.5, -b/(4.0*a)+S+0.5*(-4*S**2-2*p-q/S)**0.5, -b/(4.0*a)+S-0.5*(-4*S**2-2*p-q/S)**0.5])
+	roots = roots[numpy.isfinite(roots) & (roots>E1) & (roots<E2)]
+	
+	if len(roots) is 0:
+		return None
+	else:
+		distance = abs(vals[0]+(roots-E1)*m - coeffs_to_ASF(roots, coeffs))
+		best_root_ind = numpy.argmin(distance)
+		new_E = roots[best_root_ind]
+		return new_E, coeffs_to_ASF(new_E, coeffs), distance[best_root_ind]
+
+

@@ -107,7 +107,8 @@ def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, inpu
 	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
 	NearEdge_Data = data.convert_data(data.load_data(NearEdgeDataFile, load_options),FromType=input_data_type,ToType='asf')
 	Full_E, Imaginary_Spectrum = data.merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=merge_points, add_background=add_background, fix_distortions=fix_distortions)
-	Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
+	#Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
+	Real_Spectrum = numpy.zeros(Full_E.shape)
 	
 	Imaginary_Spectrum_Values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
 	return numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T, Imaginary_Spectrum
@@ -123,7 +124,9 @@ if __name__ == '__main__':
 	
 	ASF_E, ASF_Data = data.calculate_asf(data.ParseChemicalFormula('LaAlO3'))
 	#ASF_E, ASF_Data = data.calculate_asf(data.ParseChemicalFormula('GaAs'))
+	ASF_Data3 = data.coeffs_to_linear(ASF_E, ASF_Data, 0.1)
 	ASF_Data2 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data,ASF_Data[-1])))
+	#ASF_Data22 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data[0],ASF_Data)))
 	#Im_vals2 = data.coeffs_to_ASF(Output[1::,0], Im)
 	
 	import matplotlib
@@ -133,7 +136,9 @@ if __name__ == '__main__':
 	pylab.figure()
 	#pylab.plot([ 38522.87, 41258.87], [0.66327639165181085, 3.4081646761417437], 'og')
 	pylab.plot(Output[:,0],Output[:,1],'xg-',Output[:,0],Output[:,2],'xb-')
-	pylab.plot(ASF_E,ASF_Data2,'or-')
+	pylab.plot(ASF_E,ASF_Data2,'+r')
+	#pylab.plot(ASF_E,ASF_Data22,'xr')
+	pylab.plot(ASF_Data3[0],ASF_Data3[1],'r-')
 	#pylab.plot(Output[1::,0],Im_vals2,'*y')
 	pylab.xscale('log')
 	pylab.show()
