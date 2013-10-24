@@ -68,10 +68,14 @@ def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
 	E = numpy.tile(Energy, (len(Energy)-1, 1)).T
 	Full_coeffs = imaginary_spectrum.T
 	Ident = numpy.identity(len(E))  # Use this to annul illegal operations
-	temp = (1-(Ident[:, 1:]+Ident[:, 0:-1]))
-	Symb_1 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*((Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
-	Symb_2 =                                   (-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                            +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1)
-	Symb_B = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
+	#Symb_1 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*(( Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
+	#Symb_2 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*((-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))                            +(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1))
+	#Symb_B = numpy.sum(Symb_2-Symb_1, axis=1)  # Sum areas for approximate integral
+	
+	Symb_1 = (( Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)-(Full_coeffs[3, :]/E+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))+Full_coeffs[4, :]/E*(X2**-1-X1**-1))
+	Symb_2 = ((-Full_coeffs[0, :]*E+Full_coeffs[1, :])*(X2-X1)+0.5*Full_coeffs[0, :]*(X2**2-X1**2)+(Full_coeffs[3, :]/E-Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute(X2/X1))-Full_coeffs[4, :]/E*(X2**-1-X1**-1))+(Full_coeffs[0, :]*E**2-Full_coeffs[1, :]*E+Full_coeffs[2, :]-Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2+E)/(X1+E)))
+	Symb_3 = (1-(Ident[:, 1:]+Ident[:, 0:-1]))*(Full_coeffs[0, :]*E**2+Full_coeffs[1, :]*E+Full_coeffs[2, :]+Full_coeffs[3, :]*E**-1+Full_coeffs[4, :]*E**-2)*numpy.log(numpy.absolute((X2-E+Ident[:, 1:])/(X1-E+Ident[:, 0:-1])))
+	Symb_B = numpy.sum(Symb_2 - Symb_1 - Symb_3, axis=1)  # Sum areas for approximate integral
 	# Patch singularities
 	X1 = E[0:-2, 0]
 	XE = E[1:-1, 0]
@@ -79,12 +83,53 @@ def KK_PP(Energy, imaginary_spectrum, relativistic_correction):
 	C1 = Full_coeffs[:, 0:-1]
 	C2 = Full_coeffs[:, 1:]
 	Symb_singularities = numpy.zeros(len(Energy))
-	Symb_singularities[1:-1] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0, :]*XE+C2[1, :])*(X2-XE)+0.5*C2[0, :]*(X2**2-XE**2)-(C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4, :]*XE**-1*(X2**-2-XE**-2)
-	Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
+	#Symb_singularities[1:-1] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))+(C2[0, :]*XE+C2[1, :])*(X2-XE)+0.5*C2[0, :]*(X2**2-XE**2)-(C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute(X2/XE))+C2[4, :]*XE**-1*(X2**-2-XE**-2)
+	#Symb_singularities[1:-1] = Symb_singularities[1:-1]+(C1[0, :]*XE+C1[1, :])*(XE-X1)+0.5*C1[0, :]*(XE**2-X1**2)-(C1[3, :]*XE**-1+C1[4, :]*XE**-2)*numpy.log(numpy.absolute(XE/X1))+C1[4, :]*XE**-1*(XE**-2-X1**-2)
+	Symb_singularities[1:-1] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))
 	# Finish things off
 	KK_Re = (Symb_B-Symb_singularities) / (math.pi*Energy) + relativistic_correction
 	logger.debug("Done!")
 	return KK_Re
+
+def KK_PP_elementwise(Energy_Eval, X, I, relativistic_correction):
+	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
+	algorithm plus the Biggs and Lighthill extended data.
+
+	Parameters
+	----------
+	Energy_Eval : numpy vector of `float`
+		Set of photon energies at which to evaluate the real spectrum
+	Energy_Spectrum : numpy vector of `float`
+		Set of photon energies describing intervals for which each row of `imaginary_spectrum` is valid
+	imaginary_spectrum : two-dimensional `numpy.array` of `float`
+		The array consists of five columns of polynomial coefficients: A_1, A_0, A_-1, A_-2, A_-3
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		You can calculate the value using the `calc_relativistic_correction` function.
+
+	Returns
+	-------
+	This function returns the real part of the scattering factors.
+
+	"""
+	logger = logging.getLogger(__name__)
+	logger.info("Calculate Kramers-Kronig transform using the elementwise piecewise-polynomial algorithm")
+	#I = imaginary_spectrum
+	#X = Energy_Spectrum
+	KK_Re = numpy.zeros(Energy_Eval.shape)
+	for i,E in enumerate(Energy_Eval):
+		for j in range(len(X)-1):
+			KK_Re[i] += -((I[j,0]*E+I[j,1])*(X[j+1]-X[j])+0.5*I[j,0]*(X[j+1]**2-X[j]**2)-(I[j,3]*E**-1+I[j,4]*E**-2)*numpy.log(numpy.absolute(X[j+1]/X[j]))+I[j,4]*E**-1*(X[j+1]**-1-X[j]**-1))
+			KK_Re[i] +=  (-I[j,0]*E+I[j,1])*(X[j+1]-X[j])+0.5*I[j,0]*(X[j+1]**2-X[j]**2)+(I[j,0]*E**2-I[j,1]*E+I[j,2]-I[j,3]*E**-1+I[j,4]*E**-2)*numpy.log(numpy.absolute((X[j+1]+E)/(X[j]+E)))+(I[j,3]*E**-1-I[j,4]*E**-2)*numpy.log(numpy.absolute(X[j+1]/X[j]))-I[j,4]*E**-1*(X[j+1]**-1-X[j]**-1)
+			if E == X[j]: #when the evaluation energy falls on a spectrum segment boundary, avoid nonfinite values by integrating across two segments at once.
+				if j != 0:
+					KK_Re[i] += -(I[j,0]*E**2+I[j,1]*E+I[j,2]+I[j,3]*E**-1+I[j,4]*E**-2)*numpy.log(numpy.absolute((X[j+1]-E)/(X[j-1]-E)))
+			elif E != X[j+1]:
+					KK_Re[i] +=  -(I[j,0]*E**2+I[j,1]*E+I[j,2]+I[j,3]*E**-1+I[j,4]*E**-2)*numpy.log(numpy.absolute((X[j+1]-E)/(X[j]-E)))
+	KK_Re = KK_Re / (math.pi*Energy_Eval)  + relativistic_correction
+	logger.debug("Done!")
+	return KK_Re
+
 
 def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, input_data_type=None, merge_points=None, add_background=False, fix_distortions=False):
 	"""Do all data loading and processing and then calculate the kramers-Kronig transform.
@@ -107,8 +152,7 @@ def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, inpu
 	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
 	NearEdge_Data = data.convert_data(data.load_data(NearEdgeDataFile, load_options),FromType=input_data_type,ToType='asf')
 	Full_E, Imaginary_Spectrum = data.merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=merge_points, add_background=add_background, fix_distortions=fix_distortions)
-	#Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
-	Real_Spectrum = numpy.zeros(Full_E.shape)
+	Real_Spectrum = KK_PP(Full_E, Imaginary_Spectrum, Relativistic_Correction)
 	
 	Imaginary_Spectrum_Values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
 	return numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T, Imaginary_Spectrum
@@ -119,15 +163,20 @@ if __name__ == '__main__':
 	
 	#I will abuse this section of code for initial testing
 	#Output, Im = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
-	Output, Im = kk_calculate_real('data/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True)
-	#Output, Im = kk_calculate_real('data/As.xmu.csv', 'GaAs', input_data_type='NEXAFS', fix_distortions=True)
+	#Output, Im = kk_calculate_real('data/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True)
+	Output, Im = kk_calculate_real('data/As.xmu.csv', 'GaAs', input_data_type='NEXAFS', fix_distortions=True)
 	
-	ASF_E, ASF_Data = data.calculate_asf(data.ParseChemicalFormula('LaAlO3'))
-	#ASF_E, ASF_Data = data.calculate_asf(data.ParseChemicalFormula('GaAs'))
+	#Stoichiometry = data.ParseChemicalFormula('LaAlO3')
+	Stoichiometry = data.ParseChemicalFormula('GaAs')
+	Relativistic_Correction = calc_relativistic_correction(Stoichiometry)
+	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
 	ASF_Data3 = data.coeffs_to_linear(ASF_E, ASF_Data, 0.1)
 	ASF_Data2 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data,ASF_Data[-1])))
-	#ASF_Data22 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data[0],ASF_Data)))
-	#Im_vals2 = data.coeffs_to_ASF(Output[1::,0], Im)
+	
+	#Test_E = Output[:,0]
+	##Test_E = numpy.linspace(41257.87,41259.87,num=21)
+	#Real_Spectrum2 = KK_PP_elementwise(Test_E, Output[:,0], Im, Relativistic_Correction)
+	
 	
 	import matplotlib
 	matplotlib.use('WXAgg')
@@ -139,7 +188,7 @@ if __name__ == '__main__':
 	pylab.plot(ASF_E,ASF_Data2,'+r')
 	#pylab.plot(ASF_E,ASF_Data22,'xr')
 	pylab.plot(ASF_Data3[0],ASF_Data3[1],'r-')
-	#pylab.plot(Output[1::,0],Im_vals2,'*y')
+	#pylab.plot(Test_E,Real_Spectrum2,'*y')
 	pylab.xscale('log')
 	pylab.show()
 	

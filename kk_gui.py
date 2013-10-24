@@ -232,7 +232,7 @@ class MyFrame(wx.Frame):
 			FormulaMass = data.calculate_FormulaMass(self.Stoichiometry)
 			fd = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 			if fd.ShowModal()==wx.ID_OK:
-				outfile = open(os.path.join(fd.GetDirectory(), fd.GetFilename()), "w")
+				outfile = open(fd.GetPath(), "w")
 				outfile.write('Scattering factors for '+MolecularFormula+'\n')
 				outfile.write('Formula mass = '+str(FormulaMass)+'\n')
 				outfile.write('E(eV)\tf1\tf2\n')
