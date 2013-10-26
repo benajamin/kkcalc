@@ -114,6 +114,8 @@ class MyFrame(wx.Frame):
 #		DataBox.Add(self.InvertDataCheckBox, 0)
 		self.AddBackgroundCheckBox = wx.CheckBox(self, -1, "Add background")
 		self.AddBackgroundCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
+		self.AddBackgroundCheckBox.Disable()
+		self.AddBackgroundCheckBox.SetToolTip(wx.ToolTip("Not implemented"))
 		DataBox.Add(self.AddBackgroundCheckBox, 0)
 		self.FixDistortionsCheckBox = wx.CheckBox(self, -1, "Fix distortions")
 		self.FixDistortionsCheckBox.Bind(wx.EVT_CHECKBOX, self.Splice_Text_check)
@@ -375,7 +377,7 @@ class MyFrame(wx.Frame):
 			X_max = float(self.SpliceText2.GetValue())
 		if self.Imaginary_Spectrum is not None:
 			scale = sum([Z*count for Z, count in self.Stoichiometry])
-			print 0.001*scale
+			#print 0.001*scale
 			Im_energies, Im_values = data.coeffs_to_linear(self.Full_E, self.Imaginary_Spectrum, 0.001*scale)
 			plotlist.append(plot.PolyLine(zip(Im_energies,Im_values), colour='black', width=1))
 			
@@ -460,7 +462,7 @@ class MyFrame(wx.Frame):
 		logger.debug("Calculate button")
 		if self.Imaginary_Spectrum is not None:
 			logger.info("Calculate Kramers-Kronig transform (PP)")
-			self.KK_Real_Spectrum = kk.KK_PP(self.Full_E, self.Imaginary_Spectrum, self.Relativistic_Correction)
+			self.KK_Real_Spectrum = kk.KK_PP(self.Full_E, self.Full_E, self.Imaginary_Spectrum, self.Relativistic_Correction)
 			logger.info("Done!")
 			self.plot_data()
 
