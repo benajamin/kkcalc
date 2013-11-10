@@ -514,3 +514,4 @@ def split_segment(E1, E2, coeffs):
 		return new_E, coeffs_to_ASF(new_E, coeffs), distance[best_root_ind]
 
 
+	

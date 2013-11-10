@@ -89,7 +89,79 @@ def KK_PP(Eval_Energy, Energy, imaginary_spectrum, relativistic_correction):
 	logger.debug("Done!")
 	return KK_Re
 
-def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, input_data_type=None, merge_points=None, add_background=False, fix_distortions=False):
+def improve_accuracy(Full_E, Real_Spectrum, Imaginary_Spectrum, relativistic_correction, tolerance, recursion=50):
+	"""Calculate extra data points so that a linear interpolation is more accurate.
+	
+	Parameters
+	----------
+	Full_E : numpy vector of `float`
+		Set of photon energies describing intervals for which each row of `imaginary_spectrum` is valid
+	Real_Spectrum : numpy vector of `float`
+		The real part of the spectrum corresponding to magnitudes at photon energies in Full_E
+	Imaginary_Spectrum : two-dimensional `numpy.array` of `float`
+		The array consists of five columns of polynomial coefficients: A_1, A_0, A_-1, A_-2, A_-3
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		(You can calculate the value using the `calc_relativistic_correction` function.)
+	tolerance : float
+		Level of error in linear extrapolation of data values to be allowed.
+	recursion : integer
+		Number of times an energy interval can be halved before giving up.
+
+	Returns
+	-------
+	This function returns a numpy array with three columns respectively representing photon energy, the real spectrum and the imaginary spectrum.
+	"""
+	logger.debug("Improve data accuracy")
+	new_points = numpy.cumsum(numpy.ones((len(Full_E)-2,1),dtype=numpy.int8))+1
+	Im_values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
+	#plot_Im_values = Im_values
+	Re_values = Real_Spectrum
+	E_values = Full_E
+	temp_Im_spectrum = Imaginary_Spectrum[1:]
+	count = 0
+	improved = 1
+	total_improved_points = 0
+	while count<recursion and numpy.sum(improved)>0:
+		#get E_midpoints
+		midpoints = (E_values[new_points-1]+E_values[new_points])/2.
+		#evaluate at new points
+		Im_midpoints = data.coeffs_to_ASF(midpoints, temp_Im_spectrum)
+		Re_midpoints = KK_PP(midpoints, Full_E, Imaginary_Spectrum, relativistic_correction)
+		#evaluate error levels
+		Im_error = abs((Im_values[new_points-1]+Im_values[new_points])/2. - Im_midpoints)
+		Re_error = abs((Re_values[new_points-1]+Re_values[new_points])/2. - Re_midpoints)
+		improved = (Im_error>tolerance) | (Re_error>tolerance)
+		logger.debug(str(numpy.sum(improved))+" points (out of "+str(len(improved))+") can be improved in pass number "+str(count+1)+".")
+		total_improved_points += numpy.sum(improved)
+		#insert new points and values
+		Im_values = numpy.insert(Im_values,new_points[improved],Im_midpoints[improved])
+		Re_values = numpy.insert(Re_values,new_points[improved],Re_midpoints[improved])
+		E_values = numpy.insert(E_values,new_points[improved],midpoints[improved])
+		#prepare for next loop
+		temp_Im_spectrum =numpy.repeat(temp_Im_spectrum[improved],2,axis=0)
+		new_points = numpy.where(numpy.insert(numpy.zeros(Im_values.shape, dtype=numpy.bool),new_points[improved],True))[0]
+		new_points = numpy.vstack((new_points, new_points+1)).T.flatten()
+		count += 1
+	
+	#import matplotlib
+	#matplotlib.use('WXAgg')
+	#import pylab
+	#pylab.figure()
+	#pylab.plot(Full_E,plot_Im_values,'ok')
+	#pylab.plot(Full_E,Real_Spectrum,'og')
+	#pylab.plot(midpoints,Im_midpoints,'+b')
+	#pylab.plot(midpoints,Re_midpoints,'+r')
+	#pylab.plot(E_values,Im_values,'b-')
+	#pylab.plot(E_values,Re_values,'r-')
+	#pylab.plot(midpoints,Im_error,'b-')
+	#pylab.plot(midpoints,Re_error,'r-')
+	#pylab.xscale('log')
+	#pylab.show()
+	logger.info("Improved data accuracy by inserting "+str(total_improved_points)+" extra points.")
+	return numpy.vstack((E_values,Re_values,Im_values)).T
+	
+def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, input_data_type=None, merge_points=None, add_background=False, fix_distortions=False, curve_tolerance=None, curve_recursion=50):
 	"""Do all data loading and processing and then calculate the kramers-Kronig transform.
 	Parameters
 	----------
@@ -107,22 +179,26 @@ def kk_calculate_real(NearEdgeDataFile, ChemicalFormula, load_options=None, inpu
 	"""
 	Stoichiometry = data.ParseChemicalFormula(ChemicalFormula)
 	Relativistic_Correction = calc_relativistic_correction(Stoichiometry)
-	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
-	NearEdge_Data = data.convert_data(data.load_data(NearEdgeDataFile, load_options),FromType=input_data_type,ToType='asf')
-	Full_E, Imaginary_Spectrum = data.merge_spectra(NearEdge_Data, ASF_E, ASF_Data, merge_points=merge_points, add_background=add_background, fix_distortions=fix_distortions)
+	Full_E, Imaginary_Spectrum = data.calculate_asf(Stoichiometry)
+	if NearEdgeDataFile is not None:
+		NearEdge_Data = data.convert_data(data.load_data(NearEdgeDataFile, load_options),FromType=input_data_type,ToType='asf')
+		Full_E, Imaginary_Spectrum = data.merge_spectra(NearEdge_Data, Full_E, Imaginary_Spectrum, merge_points=merge_points, add_background=add_background, fix_distortions=fix_distortions)
 	Real_Spectrum = KK_PP(Full_E, Full_E, Imaginary_Spectrum, Relativistic_Correction)
-	
-	Imaginary_Spectrum_Values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
-	return numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T, Imaginary_Spectrum
+	if curve_tolerance is not None:
+		output_data = improve_accuracy(Full_E,Real_Spectrum,Imaginary_Spectrum, Relativistic_Correction, curve_tolerance, curve_recursion)
+	else:
+		Imaginary_Spectrum_Values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
+		output_data = numpy.vstack((Full_E,Real_Spectrum,Imaginary_Spectrum_Values)).T
+	return output_data
 
 if __name__ == '__main__':
 	#use argparse here to get command line arguments
 	#process arguments and pass to a pythonic function
 	
 	#I will abuse this section of code for initial testing
-	#Output, Im = kk_calculate_real('data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
-	Output, Im = kk_calculate_real('data/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True)
-	#Output, Im = kk_calculate_real('data/As.xmu.csv', 'GaAs', input_data_type='NEXAFS', fix_distortions=True)
+	#Output = kk_calculate_real('../../data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
+	Output = kk_calculate_real('../../data/LaAlO3/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True, curve_tolerance=0.05)
+	#Output = kk_calculate_real('../../data/GaAs/As.xmu.csv', 'GaAs', input_data_type='NEXAFS', fix_distortions=True, curve_tolerance=0.05)
 	
 	Stoichiometry = data.ParseChemicalFormula('LaAlO3')
 	#Stoichiometry = data.ParseChemicalFormula('GaAs')
