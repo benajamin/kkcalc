@@ -70,7 +70,7 @@ def coeffs_to_ASF(E, coeffs):
 	else:
 		return coeffs[:,0]*E + coeffs[:,1] + coeffs[:,2]/E + coeffs[:,3]/(E**2) + coeffs[:,4]/(E**3)
 
-def convert_Beta_to_ASF(raw_data, density=None, reverse=False):
+def convert_Beta_to_ASF(raw_data, density=None, formula_mass=None, stoichiometry=None, number_density=None, reverse=False):
 	"""Convert Beta data (index of refraction) to atomic scattering
 	factors (ASF).
 
@@ -81,8 +81,18 @@ def convert_Beta_to_ASF(raw_data, density=None, reverse=False):
 	----------
 	raw_data : two-dimensional `numpy.array` of `float`
 		The array consists of two columns: Energy and magnitude.
+	density : float
+		material density in grams per millilitre.
+	formula_mass : float
+		atomic mass sum of the materials chemical formula (molecular mass).
+	stoichiometry : a list of elemental symbol,number pairs
+		description of the combination of elements composing the material.
+	number_density : float
+		material density in atoms per millilitre.
 	reverse : boolean
-		flag to indicate the reverse conversion
+		flag to indicate the reverse conversion.
+	
+	Note that the density in millilitres makes for a factor of a million in the equations.
 
 	Returns
 	-------
@@ -91,15 +101,25 @@ def convert_Beta_to_ASF(raw_data, density=None, reverse=False):
 	part of the atomic scattering factors.
 
 	"""
-	if density is None:
-		logger.info("Material density required for conversions involving Beta, assuming value of 1 g/ml.")
-		density = 1.0
-	if reverse:
+	if number_density is None:
+		if density is None and formula_mass is None and stoichiometry is None:
+			logger.info("Material number density required for conversions involving Beta.")
+		if density is None:
+			logger.info("Assuming a material mass density of 1 g/ml.")
+			density = 1.0
+		if formula_mass is None:
+			if stoichiometry is not None:
+				formula_mass = calculate_FormulaMass(stoichiometry)
+			else:
+				logger.info("Assuming a formula mass 100.")
+				formula_mass = 100.
+		number_density = density*AVOGADRO_CONSTANT/formula_mass
+	if reverse: #ASF to Beta
 		raw_Im = raw_data[:, :2].copy()
-		raw_Im[:, 1] = (density*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)*raw_data[:, 1]/density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:, 0]**2
-	else:
+		raw_Im[:, 1] = 1000000.*raw_data[:, 1]*(number_density*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)/(2*numpy.pi*raw_data[:, 0]**2)
+	else: #Beta to ASF
 		raw_Im = raw_data[:, :2].copy()
-		raw_Im[:, 1] = density*AVOGADRO_CONSTANT*2*numpy.pi*raw_data[:, 0]**2*raw_data[:, 1]/(density*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)
+		raw_Im[:, 1] = 0.000001*raw_data[:, 1]*2*numpy.pi*raw_data[:, 0]**2/(number_density*CLASSICAL_ELECTRON_RADIUS*(PLANCKS_CONSTANT*SPEED_OF_LIGHT)**2)
 	return raw_Im
 
 
