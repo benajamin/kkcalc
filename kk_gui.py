@@ -376,8 +376,10 @@ class MyFrame(wx.Frame):
 		if self.SpliceText2.GetValue() != "End":
 			X_max = float(self.SpliceText2.GetValue())
 		if self.Imaginary_Spectrum is not None:
-			scale = sum([Z*count for Z, count in self.Stoichiometry])
-			#print 0.001*scale
+			if self.Stoichiometry is not None:
+				scale = sum([Z*count for Z, count in self.Stoichiometry])
+			else:
+				scale = 1.
 			Im_energies, Im_values = data.coeffs_to_linear(self.Full_E, self.Imaginary_Spectrum, 0.001*scale)
 			plotlist.append(plot.PolyLine(zip(Im_energies,Im_values), colour='black', width=1))
 			
