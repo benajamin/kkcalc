@@ -224,7 +224,7 @@ class MyFrame(wx.Frame):
 	def OnHelp(self, e):
 		logger.info("Opening web browser for help files.")
 		import webbrowser
-		webbrowser.open("KKcalc.html")
+		webbrowser.open("README.rst")
 
 	def OnSave(self, e):
 		"""Write data to file."""
