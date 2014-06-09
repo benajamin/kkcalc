@@ -42,6 +42,62 @@ def calc_relativistic_correction(stoichiometry):
 	return correction
 
 
+def KK_General_PP(Eval_Energy, Energy, imaginary_spectrum, orders, relativistic_correction):
+	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
+	algorithm plus the Biggs and Lighthill extended data.
+
+	Parameters
+	----------
+	Eval_Energy : numpy vector of `float`
+		Set of photon energies describing points at which to evaluate the real spectrum
+	Energy : numpy vector of `float`
+		Set of photon energies describing intervals for which each row of `imaginary_spectrum` is valid
+	imaginary_spectrum : two-dimensional `numpy.array` of `float`
+		The array consists of columns of polynomial coefficients belonging to the power terms indicated by 'order'
+	orders : numpy vector of integers
+		The vector represents the polynomial indices corresponding to the columns of imaginary_spectrum
+	relativistic_correction : float
+		The relativistic correction to the Kramers-Kronig transform.
+		You can calculate the value using the `calc_relativistic_correction` function.
+
+	Returns
+	-------
+	This function returns the real part of the scattering factors evaluated at photon energies specified by Eval_Energy.
+
+	"""
+	logger = logging.getLogger(__name__)
+	logger.info("Calculate Kramers-Kronig transform using general piecewise-polynomial algorithm")
+	# Need to build x-E-n arrays
+	X = numpy.tile(Energy[:,numpy.newaxis,numpy.newaxis],(1,len(Eval_Energy),len(orders)))
+	E = numpy.tile(Eval_Energy[numpy.newaxis,:,numpy.newaxis],(len(Energy)-1,1,len(orders)))
+	C = numpy.tile(imaginary_spectrum[:,numpy.newaxis,:],(1,len(Eval_Energy),1))
+	N = numpy.tile(orders[numpy.newaxis,numpy.newaxis,:],(len(Energy)-1,len(Eval_Energy),1))
+	poles = numpy.equal(X,numpy.tile(Eval_Energy[numpy.newaxis,:,numpy.newaxis],(len(Energy),1,len(orders))))
+	
+	# all N, ln(x+E) and ln(x-E) terms and poles
+	Integral = numpy.sum(-C*(-E)**N*numpy.log(numpy.absolute((X[1:,:,:]+E)/(X[:-1,:,:]+E)))-C*E**N*(1-poles[1:,:,:])*numpy.log(numpy.absolute((X[1:,:,:]-E+poles[1:,:,:])/((1-poles[:-1,:,:])*X[:-1,:,:]+poles[:-1,:,:]*X[[0]+range(len(Energy)-2),:,:]-E))),axis=(0,2))
+	
+	if numpy.any(orders<=-2): # N<=-2, ln(x) terms
+		i = [slice(None,None,None),slice(None,None,None),orders<=-2]
+		Integral += numpy.sum(C[i]*((-E[i])**N[i]+E[i]**N[i])*numpy.log(numpy.absolute((X[1:,:,orders<=-2])/(X[:-1,:,orders<=-2]))),axis=(0,2))
+	
+	if numpy.any(orders>=0): # N>=0,  x^k terms
+		for ni in numpy.where(orders>=0)[0]:
+			i = [slice(None,None,None),slice(None,None,None),ni]
+			n = orders[ni]
+			for k in range(n,0,-2):
+				Integral += numpy.sum(C[i]/float(-k)*2*E[i]**(n-k)*(X[1:,:,ni]**k-X[:-1,:,ni]**k),axis=0)
+	
+	if numpy.any(orders <=-3): # N<=-3, x^k terms
+		for ni in numpy.where(orders<=-3)[0]:
+			i = [slice(None,None,None),slice(None,None,None),ni]
+			n = orders[ni]
+			for k in range(n+2,0,2):
+				Integral += numpy.sum(C[i]/float(k)*((-1)**(n-k)+1)*E[i]**(n-k)*(X[1:,:,ni]**k-X[:-1,:,ni]**k),axis=0)
+	
+	logger.debug("Done!")
+	return Integral / math.pi + relativistic_correction
+
 def KK_PP(Eval_Energy, Energy, imaginary_spectrum, relativistic_correction):
 	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
 	algorithm plus the Biggs and Lighthill extended data.
@@ -64,7 +120,7 @@ def KK_PP(Eval_Energy, Energy, imaginary_spectrum, relativistic_correction):
 
 	"""
 	logger = logging.getLogger(__name__)
-	logger.info("Calculate Kramers-Kronig transform using piecewise-polynomial algorithm")
+	logger.info("Calculate Kramers-Kronig transform using (n from 1 to -3) piecewise-polynomial algorithm")
 	X1 = Energy[0:-1]
 	X2 = Energy[1:]
 	E = numpy.tile(Eval_Energy, (len(Energy)-1, 1)).T
