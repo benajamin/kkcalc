@@ -296,14 +296,14 @@ def convert_data(Data, FromType, ToType, Density=None):
 	if FromType.lower() in ['photoabsorption', 'nexafs', 'xanes']:
 		converted_data = convert_NEXAFS_to_ASF(Data)
 	elif FromType.lower() in ['beta']:
-		converted_data = convert_Beta_to_ASF(Data, density=density)
+		converted_data = convert_Beta_to_ASF(Data, density=Density)
 	else: #if already ASF
 		converted_data = Data.copy()
 	#data should now be in terms of ASF
 	if ToType.lower() in ['photoabsorption', 'nexafs', 'xanes']:
 		converted_data = convert_NEXAFS_to_ASF(converted_data, reverse=True)
 	elif ToType.lower() in ['beta']:
-		converted_data = convert_Beta_to_ASF(converted_data, density=density, reverse=True)
+		converted_data = convert_Beta_to_ASF(converted_data, density=Density, reverse=True)
 	return converted_data
 	
 	
