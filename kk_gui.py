@@ -468,10 +468,11 @@ class MyFrame(wx.Frame):
 			logger.info("Done!")
 			self.plot_data()
 
-
-
-if __name__ == '__main__':
+def start_wx():
 	app = wx.App()
 	f = MyFrame()
 	app.SetTopWindow(f)
 	app.MainLoop()
+
+if __name__ == '__main__':
+	start_wx()
