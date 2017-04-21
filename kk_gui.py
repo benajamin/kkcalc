@@ -269,7 +269,6 @@ class MyFrame(wx.Frame):
 		else:
 			splice_eV[1] = float(self.SpliceText2.GetValue())
 		if self.raw_file is not None and self.ASF_Data is None:
-			print "nothing"
 			self.Full_E, self.Imaginary_Spectrum, self.NearEdgeData, self.splice_ind  = data.merge_spectra(self.NearEdgeData, self.ASF_E, self.ASF_Data, merge_points=splice_eV, add_background=self.AddBackgroundCheckBox.GetValue(), plotting_extras=True)
 
 		elif self.raw_file is None and self.ASF_Data is not None:
@@ -432,7 +431,7 @@ class MyFrame(wx.Frame):
 		#print plotlist
 		#print X_min, X_max, Y_min, Y_max
 		self.PlotAxes.Draw(plot.PlotGraphics(plotlist, '', 'Energy (eV)', 'Magnitude'), xAxis=(X_min, X_max), yAxis=(0, Y_max))
-		print "Plotlist =", len(plotlist)
+		#print "Plotlist =", len(plotlist)
 
 	def Splice_Text_check(self, evt):
 		self.combine_data()
