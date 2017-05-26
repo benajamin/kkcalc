@@ -210,7 +210,7 @@ class MyFrame(wx.Frame):
 	def OnOpen(self, e):
 		"""Load data from a file."""
 		success = False
-		dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.OPEN)
+		dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
 			success = True
 			self.dirname, self.filename = os.path.split(dlg.GetPath())
