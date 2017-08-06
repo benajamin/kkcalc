@@ -62,6 +62,10 @@ class MyFrame(wx.Frame):
 		filemenu.Append(wx.ID_OPEN, "L&oad", " Load photoabsorption data from file")
 		filemenu.AppendSeparator()
 		filemenu.Append(wx.ID_SAVE, "&Save", " Export results to file")
+		exportmenu = wx.Menu()
+		exportmenu.Append(201,"Photoabsorption", " Export X-ray absorption data")
+		exportmenu.Append(202,"Refractive Index", " Export beta and delta")
+		filemenu.AppendMenu(200,"Export",exportmenu)   # Adding the "exportmenu" to the filemenu
 		filemenu.AppendSeparator()
 		filemenu.Append(wx.ID_EXIT, "E&xit", " Terminate the program")
 		helpmenu = wx.Menu()
@@ -75,6 +79,8 @@ class MyFrame(wx.Frame):
 		self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
 		wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
 		wx.EVT_MENU(self, wx.ID_SAVE, self.OnSave)
+		wx.EVT_MENU(self, 201, self.OnSave)   # will set convert_to="photoabsorption" when ID is recognised
+		wx.EVT_MENU(self, 202, self.OnSave)   # will set convert_to="refractive_index" when ID is recognised
 		wx.EVT_MENU(self, wx.ID_EXIT, self.OnExit)
 		wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
 		wx.EVT_MENU(self, wx.ID_HELP, self.OnHelp)
@@ -228,23 +234,16 @@ class MyFrame(wx.Frame):
 
 	def OnSave(self, e):
 		"""Write data to file."""
+		convert_to = None
+		if e.Id == 201:
+			convert_to = "photoabsorption"
+		elif e.Id == 202:
+			convert_to = "refractive_index"
 		logger.info("Save")
-		if self.KK_Real_Spectrum is not None:
-			MolecularFormula = self.StoichiometryText.GetValue()
-			FormulaMass = data.calculate_FormulaMass(self.Stoichiometry)
-			fd = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
-			if fd.ShowModal()==wx.ID_OK:
-				outfile = open(fd.GetPath(), "w")
-				outfile.write('Scattering factors for '+MolecularFormula+'\n')
-				outfile.write('Formula mass = '+str(FormulaMass)+'\n')
-				outfile.write('E(eV)\tf1\tf2\n')
-				for i in xrange(len(self.Imaginary_Spectrum[:, 0])):
-	#				outfile.write("{0}\t{1}\t{2}\n".format(self.Full_E[i], self.KK_Real_Spectrum[i], self.Imaginary_Spectrum[i, 1]))  # Python 3.0 style
-					outfile.write("%(E)#7g\t%(Re)#7g\t%(Im)#7g\n"%{'E':self.Full_E[i], 'Re':self.KK_Real_Spectrum[i], 'Im':data.coeffs_to_ASF(self.Full_E[i], self.Imaginary_Spectrum[i,:])})  # 2.x formatting style
-				outfile.close()
-			logger.info("Scattering factors for "+MolecularFormula+" saved to "+fd.GetFilename())
-		else:
-			logger.info("Nothing to save.")
+		fd = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+		if fd.ShowModal()==wx.ID_OK:
+			metadata = {"Density": float(self.DensityText.GetValue()), "Molecular Formula":self.StoichiometryText.GetValue(),"Formula Mass":data.calculate_FormulaMass(self.Stoichiometry)}
+			data.export_data(fd.GetPath(), numpy.transpose(numpy.vstack((self.Full_E,self.KK_Real_Spectrum,data.coeffs_to_ASF(self.Full_E,self.Imaginary_Spectrum)))), header_info=metadata, convert_to=convert_to)
 
 	def combine_data(self):
 		"""Combine users near-edge data with extended spectrum data."""

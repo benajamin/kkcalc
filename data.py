@@ -68,6 +68,8 @@ def coeffs_to_ASF(E, coeffs):
 	if len(coeffs.shape) == 1:
 		return coeffs[0]*E + coeffs[1] + coeffs[2]/E + coeffs[3]/(E**2) + coeffs[4]/(E**3)
 	else:
+		if len(E) == coeffs.shape[0]+1:
+			coeffs = numpy.vstack((coeffs,coeffs[-1,:])) #Use last defined polynomial to calculate the ASF values at both second last and the last energies.
 		return coeffs[:,0]*E + coeffs[:,1] + coeffs[:,2]/E + coeffs[:,3]/(E**2) + coeffs[:,4]/(E**3)
 
 def convert_Beta_to_ASF(raw_data, density=None, formula_mass=None, stoichiometry=None, number_density=None, reverse=False):
@@ -253,7 +255,7 @@ def load_data(filename, load_options=None):
 	Returns
 	-------
 	The function returns a numpy array with two columns: Photon energy and Imaginary scattering factor values
-"""
+	"""
 	logger.info("Load data from file")
 	data = []
 	if os.path.isfile(filename):
@@ -279,7 +281,51 @@ def load_data(filename, load_options=None):
 			data_column = data.shape[1]-1
 		return data[:,[E_column,data_column]]
 	
-def convert_data(Data, FromType, ToType, Density=None):
+def export_data(filename, data, header_info=None,convert_to=None):
+	"""Write spectral data into an ASCII file.
+	
+	Parameters
+	----------
+	filename : string path to data file
+	data : array of floats, arranged in columns, with energy in the first.
+	save_options : dictionary of optional settings
+
+	Returns
+	-------
+	None
+	"""
+	logger.info("Export data to file")
+	if data is not None:
+		column_headings = '# E(eV)\tf1\tf2\n'
+		data_type = "Scattering factors"
+		if convert_to == 'photoabsorption':
+			data = convert_data(data[:,[0,2]],'ASF',convert_to, Density=header_info['Density'])
+			column_headings = '# E(eV)\tphotoabsorption\n'
+			data_type = "Photoabsorption spectrum"
+		elif convert_to == 'refractive_index':
+			data[:,1] = convert_data(data[:,[0,1]],'ASF',convert_to, Density=header_info['Density'], Formula_Mass=header_info["Formula Mass"])[:,1]
+			data[:,2] = convert_data(data[:,[0,2]],'ASF',convert_to, Density=header_info['Density'], Formula_Mass=header_info["Formula Mass"])[:,1]
+			column_headings = '# E(eV)\tDelta\tBeta\n'
+			data_type = "Refractive index"
+		with open(filename, "w") as outfile:
+			if header_info is not None:
+				for key in header_info:
+					outfile.write('# '+key+' = '+str(header_info[key])+'\n')
+			outfile.write(column_headings)
+			numpy.savetxt(outfile,data,fmt="%7g",delimiter="\t")
+		logger.info(data_type+" for "+header_info["Molecular Formula"]+" saved to "+filename)
+	else:
+		logger.info("Nothing to save.")
+
+
+
+
+
+
+
+
+
+def convert_data(Data, FromType, ToType, Density=None, Formula_Mass=None):
 	"""Switchyard function for converting between data types.
 	
 	Parameters
@@ -302,8 +348,8 @@ def convert_data(Data, FromType, ToType, Density=None):
 	#data should now be in terms of ASF
 	if ToType.lower() in ['photoabsorption', 'nexafs', 'xanes']:
 		converted_data = convert_NEXAFS_to_ASF(converted_data, reverse=True)
-	elif ToType.lower() in ['beta']:
-		converted_data = convert_Beta_to_ASF(converted_data, density=Density, reverse=True)
+	elif ToType.lower() in ['refractive_index','beta']:
+		converted_data = convert_Beta_to_ASF(converted_data, density=Density, formula_mass=Formula_Mass, reverse=True)
 	return converted_data
 	
 	
