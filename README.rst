@@ -15,7 +15,7 @@ KKcalc is a program to calculate the real part of the refractive index of a mate
 - Freely available on a wide range of platforms.
 - Graphical interface for easy use.
 
-For support, please contact benjaminDOTwattsATgmailDOTcom.
+For support, please contact benjamin.watts@gmail.com
 
 The major emphasis of this program is to provide **correct** results. I would be glad to be informed of any problems.
 
@@ -63,6 +63,7 @@ Basic Usage
 5. Click on the "Calculate" button. The new real scattering factors are plotted upon completion of the Kramers-Kronig transform calculation (should only take a second, idepending on the number of data points and computing power).
 6. Save data by selecting: File>Save.
 
+For more advanced usage and scripting, check out the functions provided in the kk.py module.
 
 Details
 =======

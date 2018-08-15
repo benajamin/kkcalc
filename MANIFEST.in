@@ -1,0 +1,5 @@
+include *.rst
+include LICENSE.txt
+include kkcalc/ASF.json
+recursive-include kkcalc *.py
+exclude kkcalc/kk_gui_qt.py kkcalc/kk_gui_tk.py kkcalc/PackRawData.py
