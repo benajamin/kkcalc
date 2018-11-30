@@ -39,7 +39,7 @@ def load_Element_Database():
 
 	"""
 	logger.info("Loading element database")
-	with open('ASF.json','r') as f:
+	with open(os.path.join(os.path.dirname(__file__),'ASF.json'),'r') as f:
 		Element_Database = json.load(f)
 	for Z in range(1,93):
 		Element_Database[str(Z)]['E'] = numpy.array(Element_Database[str(Z)]['E'])
@@ -377,7 +377,7 @@ def calculate_asf(Stoichiometry):
 		total_E = numpy.unique(total_E)
 		# add weighted asf data sets for KK calculation
 		total_Im_coeffs = numpy.zeros((len(total_E)-1, 5))
-		counters = numpy.zeros((len(Stoichiometry)))
+		counters = numpy.zeros((len(Stoichiometry)),dtype=numpy.int)
 		for i,E in enumerate(total_E[1:]):
 			sum_Im_coeffs = 0
 			for j in range(len(counters)):
