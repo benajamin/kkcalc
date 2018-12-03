@@ -131,13 +131,13 @@ def KK_PP(Eval_Energy, Energy, imaginary_spectrum, relativistic_correction):
 	Symb_B = numpy.sum(Symb_2 - Symb_1 - Symb_3, axis=1)  # Sum areas for approximate integral
 	# Patch singularities
 	hits = Energy[1:-1]==E[:,0:-1]
-	E_hits = numpy.insert(numpy.any(hits, axis=0),[0,0],False)
+	E_hits = numpy.append(numpy.insert(numpy.any(hits, axis=0),[0,0],False),[False,False])
 	Eval_hits = numpy.any(hits, axis=1)
 	X1 = Energy[E_hits[2:]]
-	XE = Energy[E_hits[1:]]
-	X2 = Energy[E_hits]
-	C1 = Full_coeffs[:, E_hits[2:]]
-	C2 = Full_coeffs[:, E_hits[1:]]
+	XE = Energy[E_hits[1:-1]]
+	X2 = Energy[E_hits[:-2]]
+	C1 = Full_coeffs[:, E_hits[2:-1]]
+	C2 = Full_coeffs[:, E_hits[1:-2]]
 	Symb_singularities = numpy.zeros(len(Eval_Energy))
 	Symb_singularities[Eval_hits] = (C2[0, :]*XE**2+C2[1, :]*XE+C2[2, :]+C2[3, :]*XE**-1+C2[4, :]*XE**-2)*numpy.log(numpy.absolute((X2-XE)/(X1-XE)))
 	# Finish things off
