@@ -10,7 +10,7 @@
 
 """Unit tests for module `kk.py`."""
 
-import kk
+from . import kk
 import unittest
 
 
