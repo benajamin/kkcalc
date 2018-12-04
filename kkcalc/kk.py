@@ -19,7 +19,7 @@ if __name__ == '__main__':
 import math
 import numpy
 import os
-import data
+from . import data
 
 
 def calc_relativistic_correction(stoichiometry):
@@ -75,7 +75,7 @@ def KK_General_PP(Eval_Energy, Energy, imaginary_spectrum, orders, relativistic_
 	poles = numpy.equal(X,numpy.tile(Eval_Energy[numpy.newaxis,:,numpy.newaxis],(len(Energy),1,len(orders))))
 	
 	# all N, ln(x+E) and ln(x-E) terms and poles
-	Integral = numpy.sum(-C*(-E)**N*numpy.log(numpy.absolute((X[1:,:,:]+E)/(X[:-1,:,:]+E)))-C*E**N*(1-poles[1:,:,:])*numpy.log(numpy.absolute((X[1:,:,:]-E+poles[1:,:,:])/((1-poles[:-1,:,:])*X[:-1,:,:]+poles[:-1,:,:]*X[[0]+range(len(Energy)-2),:,:]-E))),axis=(0,2))
+	Integral = numpy.sum(-C*(-E)**N*numpy.log(numpy.absolute((X[1:,:,:]+E)/(X[:-1,:,:]+E)))-C*E**N*(1-poles[1:,:,:])*numpy.log(numpy.absolute((X[1:,:,:]-E+poles[1:,:,:])/((1-poles[:-1,:,:])*X[:-1,:,:]+poles[:-1,:,:]*X[[0]+list(range(len(Energy)-2)),:,:]-E))),axis=(0,2))
 	
 	if numpy.any(orders<=-2): # N<=-2, ln(x) terms
 		i = [slice(None,None,None),slice(None,None,None),orders<=-2]

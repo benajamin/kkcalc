@@ -14,9 +14,9 @@ setuptools.setup(
     url="https://bitbucket.org/benajamin/kkcalc",
     packages=setuptools.find_packages(),
     package_data={'kkcalc': ['*.json']},
-    install_requires=['numpy'],
+    install_requires=['numpy', 'scipy'],
     classifiers=(
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: zlib/libpng License  ",
         "Topic :: Scientific/Engineering :: Physics",
         "Operating System :: OS Independent",

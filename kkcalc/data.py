@@ -271,11 +271,11 @@ def load_data(filename, load_options=None):
 		logger.error("no data found in "+filename)
 		return None
 	else:
-		if isinstance(load_options,dict) and load_options.has_key('E_column'):
+		if isinstance(load_options,dict) and 'E_column' in load_options:
 			E_column = int(load_options['E_column'])
 		else:
 			E_column = 0
-		if isinstance(load_options,dict) and load_options.has_key('data_column'):
+		if isinstance(load_options,dict) and 'data_column' in load_options:
 			data_column = int(load_options['data_column'])
 		else:
 			data_column = data.shape[1]-1
@@ -492,7 +492,7 @@ def coeffs_to_linear(E, coeffs, threshold):
 	curvature = 2*coeffs[:,2]/(E[0:-1]**3) + 6*coeffs[:,3]/(E[0:-1]**4) + 12*coeffs[:,4]/(E[0:-1]**5)
 	linear_E = numpy.array([])
 	linear_Vals = numpy.array([])
-	for i in xrange(len(E)-1):
+	for i in range(len(E)-1):
 		linear_E = numpy.append(linear_E, E[i])
 		linear_Vals = numpy.append(linear_Vals, coeffs_to_ASF(E[i],coeffs[i]))
 		if not numpy.all(coeffs[i,2::] == [0,0,0]):
