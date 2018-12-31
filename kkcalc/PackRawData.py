@@ -38,13 +38,13 @@ import os, os.path
 import scipy, scipy.io, scipy.interpolate
 import numpy, math, json
 
-
+BASEDIR = os.path.dirname(os.path.realpath(__file__))
 classical_electron_radius = 2.81794029957951365441605230194258e-15# meters
 Plancks_constant = 4.1356673310e-15 # eV*seconds
 speed_of_light = 2.99792458e8 # meters per second
 Avogadro_constant = 6.02214129e23
 
-Elements_DATA = [line.strip("\r\n").split() for line in open(os.path.join(os.path.pardir(__file__), 'asf', 'elements.dat'))]
+Elements_DATA = [line.strip("\r\n").split() for line in open(os.path.join(BASEDIR, 'asf', 'elements.dat'))]
 Database = dict()
 
 #################################################################################################################
@@ -116,8 +116,8 @@ for z, symbol, name, atomic_mass, Henke_file in Elements_DATA:
 	Element_Database['symbol'] = symbol
 	
 	#Get basic data
-	print("Load nff data from:", os.path.join(os.path.pardir(__file__), 'asf', Henke_file))
-	asf_RawData = LoadData(os.path.join(os.path.pardir(__file__), 'asf', Henke_file))
+	print("Load nff data from:", os.path.join(BASEDIR, 'asf', Henke_file))
+	asf_RawData = LoadData(os.path.join(BASEDIR, 'asf', Henke_file))
 	if min(asf_RawData[1:-1,0]-asf_RawData[0:-2,0])<0:
 		print("Warning! Energies in ", Henke_file, "are not in ascending order! (Sorting now..)")
 		asf_RawData.sort()

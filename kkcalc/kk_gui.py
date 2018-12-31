@@ -70,6 +70,7 @@ class MyFrame(wx.Frame):
 		filemenu.Append(wx.ID_EXIT, "E&xit", " Terminate the program")
 		helpmenu = wx.Menu()
 		helpmenu.Append(wx.ID_HELP, "&Help", " How to use this program")
+		helpmenu.Append(205, "&Article", " Publication describing how this calculation works")
 		helpmenu.AppendSeparator()
 		helpmenu.Append(wx.ID_ABOUT, "&About", " Information about this program")
 		# Creating the menubar.
@@ -83,6 +84,7 @@ class MyFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.OnSave, id=202)   # will set convert_to="refractive_index" when ID is recognised
 		self.Bind(wx.EVT_MENU, self.OnExit, id=wx.ID_EXIT)
 		self.Bind(wx.EVT_MENU, self.OnAbout, id=wx.ID_ABOUT)
+		self.Bind(wx.EVT_MENU, self.OnArticle, id=205)
 		self.Bind(wx.EVT_MENU, self.OnHelp, id=wx.ID_HELP)
 
 
@@ -205,7 +207,7 @@ class MyFrame(wx.Frame):
 
 
 	def OnAbout(self, e):
-		d = wx.MessageDialog(self, " A utility for calculating the real part of soft X-ray spectra.\nWritten by Dr. Benjamin Watts at the Paul Scherrer Institut", "About KKcalc", wx.OK)
+		d = wx.MessageDialog(self, " A utility for calculating the real part of soft X-ray spectra written by Dr. Benjamin Watts at the Paul Scherrer Institute. If you make use of this utility, please consider citing the associated article:\n\nBenjamin Watts, ""Calculation of the Kramers-Kronig transform of X-ray spectra by a piecewise Laurent polynomial method,"" Opt. Express 22, 23628-23639 (2014)", "About KKcalc", wx.OK)
 		# Create a message dialog box
 		d.ShowModal() # Shows it
 		d.Destroy() # finally destroy it when finished.
@@ -230,7 +232,13 @@ class MyFrame(wx.Frame):
 	def OnHelp(self, e):
 		logger.info("Opening web browser for help files.")
 		import webbrowser
-		webbrowser.open("README.rst")
+		webbrowser.open(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"README.rst"))
+		#webbrowser.open("https://doi.org/10.1364/OE.22.023628")#README.rst")
+
+	def OnArticle(self, e):
+		logger.info("Opening web browser for article.")
+		import webbrowser
+		webbrowser.open("https://doi.org/10.1364/OE.22.023628")
 
 	def OnSave(self, e):
 		"""Write data to file."""

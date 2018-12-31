@@ -6,7 +6,7 @@ KKcalc
 Introduction
 ============
 
-KKcalc is a program to calculate the real part of the refractive index of a material in the X-ray region of the spectrum from measured absorption data via the Kramers-Kronig transform. KKcalc boasts the following features:
+KKcalc is a program to calculate the real part of the refractive index of a material in the X-ray region of the spectrum from measured absorption data via the Kramers-Kronig transform using an algorithm developed by Watts [WAT2014]_. KKcalc boasts the following features:
 
 - Easily extend measured spectra with published scattering factors.
 - Efficient peicewise polynomial (direct integration) algorithm for Kramers-Kronig transform.
@@ -18,12 +18,21 @@ KKcalc is a program to calculate the real part of the refractive index of a mate
 For support, please contact benjamin.watts@gmail.com
 
 The major emphasis of this program is to provide **correct** results. I would be glad to be informed of any problems.
+Please consider citing the article [WAT2014]_ when publishing work that utilises this calculation.
 
-
-Installation
+PYPI Installation
 ============
 
-Simply download the software (e.g. as a zip file) and run `kk_gui.py`. The zip file contains::
+KKcalc is included in PyPI
+
+Simply run the command::
+  pip install kkcalc
+
+Further details about pip usage can be found in the `PyPI installation tutorial <https://packaging.python.org/tutorials/installing-packages/>`_
+
+Manual Installation
+============
+Download the software (e.g. as a zip file) and run `kk_gui.py`. The zip file contains::
 
     kk.py
     kk_gui.py
@@ -88,7 +97,7 @@ In this section, we define the material whose optical properties are being inves
 "Calculation" Section
 ---------------------
 
-KKcalc implements a piecewise polynomial algorithm that performs direct integration of the area between the data-points. User-supplied data and the scattering factor below 30,000 eV [HEN1993]_ is interpolated linearly, while the high energy scattering factor data is described by Laurent polynomials [BIG1988]_ (the scattering factor data is assembled as described by Henke et al. [HEN1993]_). Using this piecewise-polynomial expression of the imaginary spectrum, the symbolic form of the Kramers-Kronig transform integral is precisely known and can be fully written symbolically (albeit piecewise). This form is then trivial (though tedious) to symbolically integrate in a piecewise fashion everywhere except at the singularity, which is avoided by integrating across two intervals at once (terms referencing the singularity cancel out). The only assumption of this method is that the piecewise-polynomial description of the imaginary spectrum is continuous (which is required by physics), all remaining steps are exact to machine precision. This algorithm is very efficient because it doesn't require equally spaced steps, which would correspond to a very large number of samples over the full energy range of the spectrum.
+KKcalc implements a piecewise polynomial algorithm that performs direct integration of the area between the data-points. [WAT2014]_ User-supplied data and the scattering factor below 30,000 eV [HEN1993]_ is interpolated linearly, while the high energy scattering factor data is described by Laurent polynomials [BIG1988]_ (the scattering factor data is assembled as described by Henke et al. [HEN1993]_). Using this piecewise-polynomial expression of the imaginary spectrum, the symbolic form of the Kramers-Kronig transform integral is precisely known and can be fully written symbolically (albeit piecewise). This form is then trivial (though tedious) to symbolically integrate in a piecewise fashion everywhere except at the singularity, which is avoided by integrating across two intervals at once (terms referencing the singularity cancel out). The only assumption of this method is that the piecewise-polynomial description of the imaginary spectrum is continuous (which is required by physics), all remaining steps are exact to machine precision. This algorithm is very efficient because it doesn't require equally spaced steps, which would correspond to a very large number of samples over the full energy range of the spectrum.
 
 The calculation of the relativistic correction deserves some mention too, since I have seen a number of programs not calculating it correctly. Information on the types and number of atoms present are taken from the "Material" box and the equation :math:`Z - (\frac{Z}{82.5})^{2.37}` (as described by Henke et al. [HEN1993]_) is applied to each atom separately and the individual corrections then summed.
 
@@ -97,17 +106,13 @@ The calculation of the relativistic correction deserves some mention too, since 
 References
 ----------
 
-.. [BRU2002] P. Bruzzoni, R.M. Carranza, J.R. Collet Lacoste, and E.A. Crespo
-  "Kramers-Kronig transforms calculation with a fast convolution algorithm"
-  *Electrochimica Acta* **48** (2002) 341-347.
+.. [WAT2014] Benjamin Watts
+  "Calculation of the Kramers-Kronig transform of X-ray spectra by a piecewise Laurent polynomial method"
+  *Opt. Express* **22**, (2014) 23628-23639. `DOI:10.1364/OE.22.023628 <https://doi.org/10.1364/OE.22.023628>`_
 
 .. [HEN1993] B.L. Henke, E.M. Gullikson, and J.C. Davis
   "X-ray interactions: photoabsorption, scattering, transmission, and reflection at E=50-30000 eV, Z=1-92"
   *Atomic Data and Nuclear Data Tables* **54**\ (2) (1993) 181-342.
-
-.. [MOH2008] N. Mohankumar, and A. Natarajan
-  "On the numerical solution of Cauchy singular integral equations in neutron transport"
-  *Annals of Nuclear Energy* **35**\ (10) (2008) 1800-1804.
 
 .. [BIG1988] F. Biggs, and R. Lighthill
   "Analytical approximations for X-ray cross-sections III"
