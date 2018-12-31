@@ -65,7 +65,7 @@ class MyFrame(wx.Frame):
 		exportmenu = wx.Menu()
 		exportmenu.Append(201,"Photoabsorption", " Export X-ray absorption data")
 		exportmenu.Append(202,"Refractive Index", " Export beta and delta")
-		filemenu.AppendMenu(200,"Export",exportmenu)   # Adding the "exportmenu" to the filemenu
+		filemenu.AppendSubMenu(exportmenu,"Export")   # Adding the "exportmenu" to the filemenu
 		filemenu.AppendSeparator()
 		filemenu.Append(wx.ID_EXIT, "E&xit", " Terminate the program")
 		helpmenu = wx.Menu()
@@ -77,13 +77,13 @@ class MyFrame(wx.Frame):
 		menuBar.Append(filemenu, "&File")  # Adding the "filemenu" to the MenuBar
 		menuBar.Append(helpmenu, "&Help")  # Adding the "helpmenu" to the MenuBar
 		self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
-		wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
-		wx.EVT_MENU(self, wx.ID_SAVE, self.OnSave)
-		wx.EVT_MENU(self, 201, self.OnSave)   # will set convert_to="photoabsorption" when ID is recognised
-		wx.EVT_MENU(self, 202, self.OnSave)   # will set convert_to="refractive_index" when ID is recognised
-		wx.EVT_MENU(self, wx.ID_EXIT, self.OnExit)
-		wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
-		wx.EVT_MENU(self, wx.ID_HELP, self.OnHelp)
+		self.Bind(wx.EVT_MENU, self.OnOpen, id=wx.ID_OPEN)
+		self.Bind(wx.EVT_MENU, self.OnSave, id=wx.ID_SAVE)
+		self.Bind(wx.EVT_MENU, self.OnSave, id=201)   # will set convert_to="photoabsorption" when ID is recognised
+		self.Bind(wx.EVT_MENU, self.OnSave, id=202)   # will set convert_to="refractive_index" when ID is recognised
+		self.Bind(wx.EVT_MENU, self.OnExit, id=wx.ID_EXIT)
+		self.Bind(wx.EVT_MENU, self.OnAbout, id=wx.ID_ABOUT)
+		self.Bind(wx.EVT_MENU, self.OnHelp, id=wx.ID_HELP)
 
 
 		Sizer1 = wx.BoxSizer(wx.HORIZONTAL)  # create outer sizer
@@ -176,7 +176,7 @@ class MyFrame(wx.Frame):
 		SizerR.Add(self.PlotAxes, 1, wx.GROW)
 		#SizerR.Add(self.Rplot, 1, wx.GROW)
 		# enable the zoom feature (drag a box around area of interest)
-		self.PlotAxes.SetEnableZoom(True)
+		self.PlotAxes.enableZoom = True
 		#self.Rplot.SetEnableZoom(True)
 
 
@@ -379,7 +379,7 @@ class MyFrame(wx.Frame):
 			else:
 				scale = 1.
 			Im_energies, Im_values = data.coeffs_to_linear(self.Full_E, self.Imaginary_Spectrum, 0.001*scale)
-			plotlist.append(plot.PolyLine(zip(Im_energies,Im_values), colour='black', width=1))
+			plotlist.append(plot.PolyLine(list(zip(Im_energies,Im_values)), colour='black', width=1))
 			
 			# get Y limits
 			if self.splice_ind is None:
@@ -414,7 +414,7 @@ class MyFrame(wx.Frame):
 			else:
 				Y_max = max(Y_max, max(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
 				Y_min = min(Y_min, min(self.KK_Real_Spectrum[self.splice_ind[0]:self.splice_ind[1]]))
-			plotlist.append(plot.PolyLine(zip(self.Full_E, self.KK_Real_Spectrum), colour='green', width=1))
+			plotlist.append(plot.PolyLine(list(zip(self.Full_E, self.KK_Real_Spectrum)), colour='green', width=1))
 
 		# Expand plotting limits for prettiness
 		window_width = X_max-X_min

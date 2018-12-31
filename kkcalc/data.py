@@ -492,7 +492,7 @@ def coeffs_to_linear(E, coeffs, threshold):
 	curvature = 2*coeffs[:,2]/(E[0:-1]**3) + 6*coeffs[:,3]/(E[0:-1]**4) + 12*coeffs[:,4]/(E[0:-1]**5)
 	linear_E = numpy.array([])
 	linear_Vals = numpy.array([])
-	for i in xrange(len(E)-1):
+	for i in range(len(E)-1):
 		linear_E = numpy.append(linear_E, E[i])
 		linear_Vals = numpy.append(linear_Vals, coeffs_to_ASF(E[i],coeffs[i]))
 		if not numpy.all(coeffs[i,2::] == [0,0,0]):
@@ -569,15 +569,21 @@ def split_segment(E1, E2, coeffs):
 		warnings.simplefilter("ignore")
 		#This line will generate warnings when failing to calculate complex roots properly, but we only care about real roots anyway. 
 		roots = numpy.array([-b/(4.0*a)-S+0.5*(-4*S**2-2*p+q/S)**0.5, -b/(4.0*a)-S-0.5*(-4*S**2-2*p+q/S)**0.5, -b/(4.0*a)+S+0.5*(-4*S**2-2*p-q/S)**0.5, -b/(4.0*a)+S-0.5*(-4*S**2-2*p-q/S)**0.5])
-	roots = roots[numpy.isfinite(roots) & (roots>E1) & (roots<E2)]
-	
-	if len(roots) is 0:
+	good_roots = []
+	for r in roots:
+		if numpy.isfinite(r) & (E1<r<E2):
+			good_roots.append(r)
+	if len(good_roots) == 0:
 		return None
+	elif len(good_roots) == 1:
+		new_E = good_roots[0]
+		distance = abs(vals[0]+(new_E-E1)*m - coeffs_to_ASF(new_E, coeffs))
 	else:
-		distance = abs(vals[0]+(roots-E1)*m - coeffs_to_ASF(roots, coeffs))
+		distance = abs(vals[0]+(good_roots-E1)*m - coeffs_to_ASF(good_roots, coeffs))
 		best_root_ind = numpy.argmin(distance)
-		new_E = roots[best_root_ind]
-		return new_E, coeffs_to_ASF(new_E, coeffs), distance[best_root_ind]
+		new_E = good_roots[best_root_ind]
+		distance = distance[best_root_ind]
+	return new_E, coeffs_to_ASF(new_E, coeffs), distance
 
 
 	
