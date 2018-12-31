@@ -24,7 +24,8 @@ PYPI Installation
 ============
 
 `KKcalc <https://pypi.org/project/kkcalc/>`_ is included in the `PyPI <https://pypi.org/>`_ package management system. To automatically install KKcalc together with all the modules it depends on, simply run the command::
-  pip install kkcalc
+
+    pip install kkcalc
 
 Further details about pip usage can be found in the `PyPI installation tutorial <https://packaging.python.org/tutorials/installing-packages/>`_
 
