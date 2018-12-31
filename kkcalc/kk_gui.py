@@ -391,11 +391,11 @@ class MyFrame(wx.Frame):
 		if self.NearEdgeData is not None:
 			Y_max = max(self.NearEdgeData[:,1])
 			Y_min = min(self.NearEdgeData[:,1])
-			plotlist.append(plot.PolyMarker(zip(self.NearEdgeData[:,0], self.NearEdgeData[:,1]), colour='blue', marker='plus', size=1))
+			plotlist.append(plot.PolyMarker(list(zip(self.NearEdgeData[:,0], self.NearEdgeData[:,1])), colour='blue', marker='plus', size=1))
 			
 		if self.splice_ind is not None:
 			splice_values = data.coeffs_to_ASF(self.Full_E[self.splice_ind], self.Imaginary_Spectrum[[self.splice_ind[0],min(self.splice_ind[1],self.Imaginary_Spectrum.shape[0]-1)]])
-			plotlist.append(plot.PolyMarker(zip(self.Full_E[self.splice_ind], splice_values), colour='red', marker='cross', size=1))
+			plotlist.append(plot.PolyMarker(list(zip(self.Full_E[self.splice_ind], splice_values)), colour='red', marker='cross', size=1))
 
 
 		if self.raw_file is not None and self.Imaginary_Spectrum is None:
