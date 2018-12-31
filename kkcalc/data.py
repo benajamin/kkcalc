@@ -271,11 +271,11 @@ def load_data(filename, load_options=None):
 		logger.error("no data found in "+filename)
 		return None
 	else:
-		if isinstance(load_options,dict) and load_options.has_key('E_column'):
+		if isinstance(load_options,dict) and 'E_column' in load_options:
 			E_column = int(load_options['E_column'])
 		else:
 			E_column = 0
-		if isinstance(load_options,dict) and load_options.has_key('data_column'):
+		if isinstance(load_options,dict) and 'data_column' in load_options:
 			data_column = int(load_options['data_column'])
 		else:
 			data_column = data.shape[1]-1

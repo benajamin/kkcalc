@@ -44,7 +44,7 @@ Plancks_constant = 4.1356673310e-15 # eV*seconds
 speed_of_light = 2.99792458e8 # meters per second
 Avogadro_constant = 6.02214129e23
 
-Elements_DATA = [line.strip("\r\n").split() for line in open(os.path.join(os.getcwd(), 'asf', 'elements.dat'))]
+Elements_DATA = [line.strip("\r\n").split() for line in open(os.path.join(os.path.pardir(__file__), 'asf', 'elements.dat'))]
 Database = dict()
 
 #################################################################################################################
@@ -59,9 +59,9 @@ def LoadData(filename):
 				pass
 		data = numpy.array(data)
 	else:
-		print "Error:", filename, "is not a valid file name."
+		print("Error:", filename, "is not a valid file name.")
 	if len(data)==0:
-		print "Error: no data found in", filename
+		print("Error: no data found in", filename)
 		return []
 	else:
 		return data
@@ -91,7 +91,7 @@ def parse_BL_file():
 			pass
 		except KeyError:
 			BLfile[int(values[0])] = [values]
-	for elem,coeffs in BLfile.items():
+	for elem,coeffs in list(BLfile.items()):
 		BLfile[elem] = numpy.array(coeffs)[:,2:]
 	return BLfile
 
@@ -108,7 +108,7 @@ BL_data = parse_BL_file()
 
 #for z, symbol, name, atomic_mass, Henke_file in [Elements_DATA[0]]:
 for z, symbol, name, atomic_mass, Henke_file in Elements_DATA:
-	print z, symbol, name, atomic_mass, Henke_file
+	print(z, symbol, name, atomic_mass, Henke_file)
 	#Get basic metadata
 	Element_Database = dict()
 	Element_Database['mass'] = float(atomic_mass)
@@ -116,10 +116,10 @@ for z, symbol, name, atomic_mass, Henke_file in Elements_DATA:
 	Element_Database['symbol'] = symbol
 	
 	#Get basic data
-	print "Load nff data from:", os.path.join(os.getcwd(), 'asf', Henke_file)
-	asf_RawData = LoadData(os.path.join(os.getcwd(), 'asf', Henke_file))
+	print("Load nff data from:", os.path.join(os.path.pardir(__file__), 'asf', Henke_file))
+	asf_RawData = LoadData(os.path.join(os.path.pardir(__file__), 'asf', Henke_file))
 	if min(asf_RawData[1:-1,0]-asf_RawData[0:-2,0])<0:
-		print "Warning! Energies in ", Henke_file, "are not in ascending order! (Sorting now..)"
+		print("Warning! Energies in ", Henke_file, "are not in ascending order! (Sorting now..)")
 		asf_RawData.sort()
 	#print BL_data[int(z)]
 	
