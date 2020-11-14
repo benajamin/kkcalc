@@ -11,7 +11,7 @@ setuptools.setup(
     description="A calculator for the Kramers Kronig transform of X-ray spectra",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    url="https://bitbucket.org/benajamin/kkcalc",
+    url="https://github.com/benajamin/kkcalc",
     packages=setuptools.find_packages(),
     package_data={'kkcalc': ['*.json']},
     install_requires=['numpy', 'scipy'],
