@@ -252,15 +252,15 @@ if __name__ == '__main__':
 	
 	#I will abuse this section of code for initial testing
 	#Output = kk_calculate_real('../../data/Xy_norm_bgsub.txt', 'C10SH14', input_data_type='NEXAFS')
-	#Output = kk_calculate_real('../../data/LaAlO3/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True, curve_tolerance=0.05)
+	Output = kk_calculate_real('../../data/LaAlO3/LaAlO3_Exp.csv', 'LaAlO3', input_data_type='NEXAFS', fix_distortions=True, curve_tolerance=0.05)
 	#Output = kk_calculate_real('../../data/GaAs/As.xmu.csv', 'GaAs', input_data_type='NEXAFS', fix_distortions=True, curve_tolerance=0.05)
 	
-	#Stoichiometry = data.ParseChemicalFormula('LaAlO3')
+	Stoichiometry = data.ParseChemicalFormula('LaAlO3')
 	#Stoichiometry = data.ParseChemicalFormula('GaAs')
-	#Relativistic_Correction = calc_relativistic_correction(Stoichiometry)
-	#ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
-	#ASF_Data3 = data.coeffs_to_linear(ASF_E, ASF_Data, 0.1)
-	#ASF_Data2 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data,ASF_Data[-1])))
+	Relativistic_Correction = calc_relativistic_correction(Stoichiometry)
+	ASF_E, ASF_Data = data.calculate_asf(Stoichiometry)
+	ASF_Data3 = data.coeffs_to_linear(ASF_E, ASF_Data, 0.1)
+	ASF_Data2 = data.coeffs_to_ASF(ASF_E, numpy.vstack((ASF_Data,ASF_Data[-1])))
 	
 	#Test_E = (Output[1:,0]+Output[0:-1,0])*0.5
 	#Test_E = numpy.linspace(41257.87,41259.87,num=21)
