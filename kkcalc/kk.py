@@ -19,7 +19,7 @@ if __name__ == '__main__':
 import math
 import numpy
 import os
-from . import data
+import kkcalc.data as data
 
 def calc_relativistic_correction(stoichiometry):
 	"""Calculate the relativistic correction to the Kramers-Kronig transform.
