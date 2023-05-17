@@ -19,7 +19,7 @@ if __name__ == '__main__':
 import math
 import numpy
 import os
-import data
+from . import data
 
 
 def calc_relativistic_correction(stoichiometry):
