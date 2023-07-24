@@ -278,7 +278,7 @@ def load_data(filename, load_options=None):
 		if isinstance(load_options,dict) and 'data_column' in load_options:
 			data_column = int(load_options['data_column'])
 		else:
-			data_column = data.shape[1]-1
+			data_column = data.shape[1]-1   
 		return data[:,[E_column,data_column]]
 	
 def export_data(filename, data, header_info=None,convert_to=None):
