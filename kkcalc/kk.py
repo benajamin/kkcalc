@@ -19,7 +19,7 @@ if __name__ == '__main__':
 import math
 import numpy
 import os
-import data
+from . import data
 
 
 def calc_relativistic_correction(stoichiometry):
@@ -196,7 +196,7 @@ def improve_accuracy(Full_E, Real_Spectrum, Imaginary_Spectrum, relativistic_cor
 		E_values = numpy.insert(E_values,new_points[improved],midpoints[improved])
 		#prepare for next loop
 		temp_Im_spectrum =numpy.repeat(temp_Im_spectrum[improved],2,axis=0)
-		new_points = numpy.where(numpy.insert(numpy.zeros(Im_values.shape, dtype=numpy.bool),new_points[improved],True))[0]
+		new_points = numpy.where(numpy.insert(numpy.zeros(Im_values.shape, dtype=bool),new_points[improved],True))[0]
 		new_points = numpy.vstack((new_points, new_points+1)).T.flatten()
 		count += 1
 	

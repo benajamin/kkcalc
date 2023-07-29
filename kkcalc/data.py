@@ -278,7 +278,7 @@ def load_data(filename, load_options=None):
 		if isinstance(load_options,dict) and 'data_column' in load_options:
 			data_column = int(load_options['data_column'])
 		else:
-			data_column = data.shape[1]-1
+			data_column = data.shape[1]-1   
 		return data[:,[E_column,data_column]]
 	
 def export_data(filename, data, header_info=None,convert_to=None):
@@ -377,7 +377,7 @@ def calculate_asf(Stoichiometry):
 		total_E = numpy.unique(total_E)
 		# add weighted asf data sets for KK calculation
 		total_Im_coeffs = numpy.zeros((len(total_E)-1, 5))
-		counters = numpy.zeros((len(Stoichiometry)),dtype=numpy.int)
+		counters = numpy.zeros((len(Stoichiometry)),dtype=int)
 		for i,E in enumerate(total_E[1:]):
 			sum_Im_coeffs = 0
 			for j in range(len(counters)):
