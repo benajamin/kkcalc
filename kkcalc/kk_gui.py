@@ -20,7 +20,7 @@ import wx
 import wx.lib.plot as plot
 import numpy
 import os
-import kk, data
+from . import kk, data
 
 try:
 	import scipy.optimize

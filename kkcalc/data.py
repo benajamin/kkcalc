@@ -215,17 +215,17 @@ def ParseChemicalFormula(Formula,recursion_flag=False):
 		logger.info("Parsing '"+Formula+"' as a chemical formula")
 	Stoichiometry = []
 	m=re.search('((?P<Element>[A-Z][a-z]?)|\((?P<Paren>.*)\))(?P<Number>\d*(\.\d+)?)(?P<Remainder>.*)',Formula)
-	if len(m.group('Number')) is not 0:
+	if len(m.group('Number')) != 0:
 		Number = float(m.group('Number'))
 	else:
 		Number = 1.0
 	if m.group('Element') is not None:
 		Z = ConvertElementSymbol(m.group('Element'))
-		if Z is not 0:
+		if Z != 0:
 			Stoichiometry.append([Z,Number])
 	elif len(m.group('Paren')) > 0:
 		Stoichiometry +=[[x[0],x[1]*Number] for x in ParseChemicalFormula(m.group('Paren'),recursion_flag=True)]
-	if len(m.group('Remainder')) is not 0:
+	if len(m.group('Remainder')) != 0:
 		Stoichiometry += ParseChemicalFormula(m.group('Remainder'),recursion_flag=True)
 	return Stoichiometry
 	
@@ -366,7 +366,7 @@ def calculate_asf(Stoichiometry):
 	total_Im_coeffs: nx5 numpy array in which each row lists the polynomial coefficients describing the shape of the spectrum in that segment.
 	"""
 	logger.info("Calculate material scattering factor data from the given stoichiometry")
-	if len(Stoichiometry) is 0:
+	if len(Stoichiometry) == 0:
 		logger.error("No elements described by input.")
 		return None
 	else:
