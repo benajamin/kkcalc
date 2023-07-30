@@ -169,7 +169,7 @@ def improve_accuracy(Full_E, Real_Spectrum, Imaginary_Spectrum, relativistic_cor
 	This function returns a numpy array with three columns respectively representing photon energy, the real spectrum and the imaginary spectrum.
 	"""
 	logger.debug("Improve data accuracy")
-	new_points = numpy.cumsum(numpy.ones((len(Full_E)-2,1),dtype=numpy.int8))+1
+	new_points = numpy.cumsum(numpy.ones((len(Full_E)-2,1),dtype=int))+1
 	Im_values = data.coeffs_to_ASF(Full_E, numpy.vstack((Imaginary_Spectrum,Imaginary_Spectrum[-1])))
 	#plot_Im_values = Im_values
 	Re_values = Real_Spectrum
