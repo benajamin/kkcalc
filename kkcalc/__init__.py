@@ -1,3 +1,3 @@
 name = "kkcalc"
 
-from . import kk, data
+from .kk import *
