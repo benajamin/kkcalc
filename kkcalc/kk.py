@@ -401,7 +401,9 @@ def kk_calculate_real(
         )
     elif isinstance(NearEdgeDataSource, numpy.ndarray):
         NearEdge_Data = data.convert_data(
-            NearEdge_Data, FromType=input_data_type, ToType="asf"
+            NearEdgeDataSource, 
+            FromType=input_data_type, 
+            ToType="asf",
         )
         Full_E, Imaginary_Spectrum = data.merge_spectra(
             NearEdge_Data,
