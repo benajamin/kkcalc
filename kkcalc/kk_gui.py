@@ -21,6 +21,7 @@ import wx.lib.plot as plot
 import numpy
 import os
 from . import kk, data
+from .__init__ import __version__ as version
 
 try:
 	import scipy.optimize
@@ -33,7 +34,7 @@ except ImportError:
 class MyFrame(wx.Frame):
 
 	def __init__(self):
-		wx.Frame.__init__(self, None, wx.ID_ANY, "Kramers-Kronig Calculator", size=(500, 800))
+		wx.Frame.__init__(self, None, wx.ID_ANY, f"Kramers-Kronig Calculator {version}", size=(500, 800))
 
 		# Initialise variables
 		self.dirname = ''
