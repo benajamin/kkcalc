@@ -21,7 +21,7 @@ The major emphasis of this program is to provide **correct** results. I would be
 Please consider citing the article [WATTS2014]_ when publishing work that utilises this calculation.
 
 PYPI Installation
-============
+=================
 
 `KKcalc <https://pypi.org/project/kkcalc/>`_ is included in the `PyPI <https://pypi.org/>`_ package management system. To automatically install KKcalc together with all the modules it depends on, simply run the command::
 
@@ -30,7 +30,7 @@ PYPI Installation
 Further details about pip usage can be found in the `PyPI installation tutorial <https://packaging.python.org/tutorials/installing-packages/>`_
 
 Manual Installation
-============
+===================
 Download the software (e.g. as a zip file). The zip file contains::
 
     kk.py
