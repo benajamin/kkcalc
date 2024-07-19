@@ -145,6 +145,28 @@ def KK_PP(Eval_Energy, Energy, imaginary_spectrum, relativistic_correction):
 	logger.debug("Done!")
 	return KK_Re
 
+def inv_KK_PP(Eval_Energy, Energy, real_spectrum):
+	"""Calculate Kramers-Kronig transform with "Piecewise Polynomial"
+	algorithm plus the Biggs and Lighthill extended data.
+
+	Parameters
+	----------
+	Eval_Energy : numpy vector of `float`
+		Set of photon energies describing points at which to evaluate the real spectrum
+	Energy : numpy vector of `float`
+		Set of photon energies describing intervals for which each row of `imaginary_spectrum` is valid
+	real_spectrum : two-dimensional `numpy.array` of `float`
+		The array consists of five columns of polynomial coefficients: A_1, A_0, A_-1, A_-2, A_-3
+
+	Returns
+	-------
+	This function returns the imaginary part of the scattering factors evaluated at photon energies specified by Eval_Energy.
+
+	"""
+## Inverse KK is only a minor modification of the forward algorithm
+	return -Eval_Energy*KK_PP(Eval_Energy, Energy, numpy.roll(real_spectrum,1,axis=1), 0)
+
+
 def improve_accuracy(Full_E, Real_Spectrum, Imaginary_Spectrum, relativistic_correction, tolerance, recursion=50):
 	"""Calculate extra data points so that a linear interpolation is more accurate.
 	
