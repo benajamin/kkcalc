@@ -4,7 +4,7 @@ Classes for common attributes between atomic scattering factor and polynomial mo
 
 import abc
 import warnings
-from kkcalc.stoich import stoichiometry as kk_stoichiometry, CompositionAlias
+from kkcalc2.stoich import stoichiometry as kk_stoichiometry, CompositionAlias
 from scipy.constants import N_A
 from typing import Self, TypedDict
 
@@ -148,12 +148,12 @@ class atomic_scattering_abstract(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def is_extended(self) -> bool:
         """
-        If the material has been extended by the KKCalc database.
+        If the material has been extended by the KKCalc2 database.
 
         Returns
         -------
         bool
-            `True` if the material has been extended by the KKCalc database.
+            `True` if the material has been extended by the KKCalc2 database.
         """
         pass
 
@@ -226,7 +226,7 @@ class atomic_scattering(atomic_scattering_abstract):
         Atomic mass sum of the materials chemical formula (molecular mass).
         Equivalent to providing a stoichiometry. By default `None`.
     is_extended : bool, optional
-        `True` if the material has been extended by the KKCalc database.
+        `True` if the material has been extended by the KKCalc2 database.
         By default `False`.
     """
 
@@ -275,7 +275,7 @@ class atomic_scattering(atomic_scattering_abstract):
         self._density = density
         self._number_density = number_density
 
-        # Finally assign if the material has been extended by the KKCalc database.
+        # Finally assign if the material has been extended by the KKCalc2 database.
         self._is_extended = is_extended  # has to be done after the other assignments, otherwise cannot set stoichiometry.
         return
 
@@ -457,7 +457,7 @@ class atomic_scattering(atomic_scattering_abstract):
         ------
         ValueError
             If the object property `is_extended` is True, due to the object
-            being created from data in the KKCalc database.
+            being created from data in the KKCalc2 database.
 
         See Also
         --------
@@ -491,7 +491,7 @@ class atomic_scattering(atomic_scattering_abstract):
             self._stoichiometry = stoich
         else:
             raise ValueError(
-                "Stoichiometry is immutable on a dataset once extended by the KKCalc database."
+                "Stoichiometry is immutable on a dataset once extended by the KKCalc2 database."
             )
         return
 
@@ -501,24 +501,24 @@ class atomic_scattering(atomic_scattering_abstract):
             self._stoichiometry = None
         else:
             raise ValueError(
-                "Stoichiometry is immutable on a dataset once extended by the KKCalc database."
+                "Stoichiometry is immutable on a dataset once extended by the KKCalc2 database."
             )
         return
 
     @property
     def is_extended(self) -> bool:  # numpydoc ignore=PR02
         """
-        Property of the object if it has been extended by the KKCalc database.
+        Property of the object if it has been extended by the KKCalc2 database.
 
         Parameters
         ----------
         is_extended : bool
-            `True` if the material has been extended by the KKCalc database.
+            `True` if the material has been extended by the KKCalc2 database.
 
         Returns
         -------
         bool
-            `True` if the material has been extended by the KKCalc database.
+            `True` if the material has been extended by the KKCalc2 database.
         """
         return self._is_extended
 

@@ -1,3 +1,3 @@
 """
-Test module for the KKCalc package, built with pytest.
+Test module for the KKCalc2 package, built with pytest.
 """

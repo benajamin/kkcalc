@@ -27,7 +27,7 @@ from scipy.constants import (
 )
 
 # Internal imports
-from kkcalc.stoich import stoichiometry as kk_stoichiometry
+from kkcalc2.stoich import stoichiometry as kk_stoichiometry
 
 E_RADIUS: float
 """Classical electron radius in meters. ~2.818e-15"""

@@ -94,7 +94,7 @@ jobs:
   # # # TODO: Can add other OS builds here as needed...
   # pyinstaller-builds:
   #   if : ${{ always() && inputs.gui }}
-  #   name: kkcalc GUI 💻 (PyInstaller Builds)
+  #   name: kkcalc2 GUI 💻 (PyInstaller Builds)
   #   needs: [testing]
   #   strategy:
   #     matrix:
@@ -233,7 +233,7 @@ jobs:
         if: ${{ always() && inputs.gui }}
         uses: actions/download-artifact@v7
         with:
-          pattern: "kkcalc-*-gui-*"
+          pattern: "kkcalc2-*-gui-*"
           run-id: ${{ github.run_id }}
           path: ./dist/gui/
 
@@ -241,7 +241,7 @@ jobs:
         if: ${{ always() && needs.docs.result == 'success' }}
         uses: actions/download-artifact@v7
         with:
-          pattern: "kkcalc-*-docs-html"
+          pattern: "kkcalc2-*-docs-html"
           run-id: ${{ github.run_id }}
           path: ./dist/docs/html
 
@@ -249,7 +249,7 @@ jobs:
         if: ${{ always() && needs.docs.result == 'success' && needs.docs.outputs.pdf == 'true' }}
         uses: actions/download-artifact@v7
         with:
-          pattern: "kkcalc-*-docs-pdf"
+          pattern: "kkcalc2-*-docs-pdf"
           run-id: ${{ github.run_id }}
           path: ./dist/docs/
 
@@ -283,7 +283,7 @@ jobs:
           no_operation_mode: ${{ inputs.noop || 'false' }}
           verbosity: 2
 
-  pypi-deploy-kkcalc:
+  pypi-deploy-kkcalc2:
     # 1. Separate out the deploy step from the publish step to run each step at
     #    the least amount of token privilege
     # 2. Also, deployments can fail, and its better to have a separate job if you need to retry
@@ -307,15 +307,15 @@ jobs:
 
     environment:
       name: pypi
-      # url: "https://pypi.org/p/kkcalc" # Instead, add env reference based on account.
+      # url: "https://pypi.org/p/kkcalc2" # Instead, add env reference based on account.
 
     steps:
       - name: Env | Set PyPI Repository URL
         id: set-pypi-url
         run: |
           if [[ "${{ github.repository_owner }}" == "benajamin" ]]; then
-            echo "url=https://pypi.org/p/kkcalc/" >> $GITHUB_ENV
-            echo "Set `url` to production PyPI for KKCalc (benajamin)."
+            echo "url=https://pypi.org/p/kkcalc2/" >> $GITHUB_ENV
+            echo "Set `url` to production PyPI for KKCalc2 (benajamin)."
           elif [[ "${{ github.repository_owner }}" == "xraysoftmat" ]]; then
             echo "url=https://pypi.org/p/kkcalc2/" >> $GITHUB_ENV
             echo "Set `url` to Test PyPI for KKCalc2 (xraysoftmat)."

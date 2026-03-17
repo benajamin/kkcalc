@@ -9,16 +9,16 @@ It consists of the following submodules:
         * db_models: Contains the models for accessing and using the atomic scattering
                      factor database.
 
-Additionally, the database models are imported from the `kkcalc.asf_database.db_models` module,
+Additionally, the database models are imported from the `kkcalc2.asf_database.db_models` module,
 for model completeness.
 """
 
 # Import the conversions module
-from kkcalc import conversions
-from kkcalc import transforms as transforms
+from kkcalc2 import conversions
+from kkcalc2 import transforms as transforms
 
 # Import the common base models
-from kkcalc.models.common import (
+from kkcalc2.models.common import (
     atomic_scattering_abstract,
     atomic_scattering,
     PROPERTIES_DICT,
@@ -26,12 +26,12 @@ from kkcalc.models.common import (
 )
 
 # Import the usage models
-import kkcalc.models.polynomials as polynomials
-import kkcalc.models.factors as factors
-import kkcalc.models.common as common
-import kkcalc.models.db_models as db_models
-from kkcalc.models.polynomials import asp, asp_im, asp_re, asp_complex, asp_abstract
-from kkcalc.models.factors import (
+import kkcalc2.models.polynomials as polynomials
+import kkcalc2.models.factors as factors
+import kkcalc2.models.common as common
+import kkcalc2.models.db_models as db_models
+from kkcalc2.models.polynomials import asp, asp_im, asp_re, asp_complex, asp_abstract
+from kkcalc2.models.factors import (
     asf_abstract,
     asf,
     asf_im,
@@ -41,7 +41,7 @@ from kkcalc.models.factors import (
 )
 
 # Import the database models
-from kkcalc.models.db_models import (
+from kkcalc2.models.db_models import (
     asp_db_abstract,
     asp_db_im,
     asp_db_re,

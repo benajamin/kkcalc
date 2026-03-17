@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-This is the PyInstaller spec file for kkcalc GUI application.
+This is the PyInstaller spec file for kkcalc2 GUI application.
 
 It specifies how to build the executable, including data files and filtering out unnecessary DLLs
 to reduce the final executable size. Ideally this file is generated using `pyi-makespec` command,
@@ -15,12 +15,12 @@ parser.add_argument("-n", "--name") # this is for parameters, use action="store_
 options = parser.parse_args()
 
 a = Analysis(
-    [os.path.join("..", "kkcalc", "__main__.py")],
+    [os.path.join("..", "kkcalc2", "__main__.py")],
     pathex=[],
     binaries=[],
     datas=[
-      (os.path.join("..", "kkcalc", "data"), os.path.join("kkcalc", "data")),
-      (os.path.join("..", "kkcalc", "asf_database", "ASF.json.gz"), os.path.join("kkcalc", "asf_database"))],
+      (os.path.join("..", "kkcalc2", "data"), os.path.join("kkcalc2", "data")),
+      (os.path.join("..", "kkcalc2", "asf_database", "ASF.json.gz"), os.path.join("kkcalc2", "asf_database"))],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -63,7 +63,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [('O', None, 'OPTION'), ('O', None, 'OPTION')],
-    name=options.name if options.name else 'kkcalc',
+    name=options.name if options.name else 'kkcalc2',
     debug=True,
     bootloader_ignore_signals=False,
     strip=False,

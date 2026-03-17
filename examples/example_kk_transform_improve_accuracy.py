@@ -6,12 +6,12 @@ of the `asp_db_extended` model to improve the accuracy of the Kramers-Kronig tra
 The dataset is the Polystryene Carbon K-Edge.
 """
 
-from kkcalc.models import (
+from kkcalc2.models import (
     asf_im,
     asp_db_im,
     asp_db_im_extended,
 )
-from kkcalc import stoichiometry
+from kkcalc2 import stoichiometry
 import numpy as np
 import matplotlib.pyplot as plt
 import os

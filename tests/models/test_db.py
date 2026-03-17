@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 
 # Internal
-from kkcalc.models import (
+from kkcalc2.models import (
     asp_db_im,
     asp_db_re,
     asp_db_im_extended,
@@ -26,9 +26,9 @@ from kkcalc.models import (
     # asp_db_complex_extended,
     asf_im,
 )
-from kkcalc.asf_database.db_loader import load_asf_database
+from kkcalc2.asf_database.db_loader import load_asf_database
 from ..test_stoich import basic_stoichs as bs
-from kkcalc import stoichiometry as kk_stoich
+from kkcalc2 import stoichiometry as kk_stoich
 
 
 class TestDatabaseLoading:
@@ -109,7 +109,7 @@ class TestDbScaling:
 
         # Load example data
         PS_datafile = pkgutil.get_data(
-            "kkcalc",
+            "kkcalc2",
             "data/PS_004_-dc.txt",
         )
         PS_data = np.genfromtxt(

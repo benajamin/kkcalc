@@ -4,7 +4,7 @@ Model tests for polynomial and factor representations.
 
 import pytest
 import warnings
-from kkcalc import models, stoichiometry as kk_stoich
+from kkcalc2 import models, stoichiometry as kk_stoich
 
 from ..test_stoich import fractional_stoichs as fs
 

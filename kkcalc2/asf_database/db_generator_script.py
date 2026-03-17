@@ -12,7 +12,7 @@ Workflow to accomodate:
 2. Combine Henke and BL data sets.
 3. Convert to useful format for internal use.
 4. Write to json file for distribution.
-5. Load data for use by KKcalc.
+5. Load data for use by KKCalc.
 6. Combine data for different elements as selected by user.
 6.a) figure out energy values (abscissa).
 6.b) add coefficients/intensity values in selected proportions
@@ -20,7 +20,7 @@ Workflow to accomodate:
 7.a) list of tuples for plotting.
 7.b) list of energy ranges, each with corresponding list of polynomial coefficients, (i.e. piecewise polynomial format) for PP KK calculation.
 
-Items 1-4 not usually performed by users. Items 5-7 must be integrated into KKcalc program.
+Items 1-4 not usually performed by users. Items 5-7 must be integrated into KKCalc program.
 """
 
 import os
@@ -41,7 +41,7 @@ Avogadro_constant = 6.02214129e23
 
 try:
     data_resource = pkgutil.get_data(
-        "kkcalc",
+        "kkcalc2",
         "asf_database/db_data/elements.dat",
     )
     with io.BytesIO(data_resource) as f:
@@ -258,7 +258,7 @@ def Coeffs_to_ASF(E: npt.ArrayLike, coeffs: npt.NDArray) -> npt.NDArray:
 ###########################################################################################################
 
 data = pkgutil.get_data(
-    "kkcalc",
+    "kkcalc2",
     "asf_database/db_data/original_biggs_file.dat",
 )
 if data is not None:

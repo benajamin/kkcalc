@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 # Project information
-name = "KKCalc"
+name = "KKCalc2"
 version = "0.8.4"
 description = "Kramers-Kronig transforms for optical data."
 readme = "README.rst"
@@ -43,7 +43,7 @@ classifiers = [
 [project.urls]
 # Website, documentation and other continuous integration URLS.
 code = "https://github.com/xraysoftmat/kkcalc" # code = "https://github.com/benajamin/kkcalc"
-documentation = "https://kkcalc.readthedocs.io/en/latest/"
+documentation = "https://kkcalc2.readthedocs.io/en/latest/"
 
 # [project.optional-dependencies]
 # gui = [
@@ -56,8 +56,8 @@ documentation = "https://kkcalc.readthedocs.io/en/latest/"
 
 [project.gui-scripts]
 # GUI entry points for the command line
-kkcalc = "kkcalc.__main__:main"
-kkcalc_tr = "kkcalc.__main__:main_with_traceback"
+kkcalc2 = "kkcalc2.__main__:main"
+kkcalc2_tr = "kkcalc2.__main__:main_with_traceback"
 
 [dependency-groups]
 # Dependency groups for optional dependencies.
@@ -101,14 +101,14 @@ docs = [
 [tool.hatch.build]
 directory = "./dist" # Output directory for built packages
 targets.sdist.include = [
-    "kkcalc/**",
+    "kkcalc2/**",
     # "examples/data/**",
 ]
 targets.sdist.exclude = [
     "docs/*",
     "tests/*",
-    "kkcalc/asf_database/db_data/*", # Exclude raw data files from package
-    "kkcalc/asf_database/db_generator_script.py", # Exclude db generator script
+    "kkcalc2/asf_database/db_data/*", # Exclude raw data files from package
+    "kkcalc2/asf_database/db_generator_script.py", # Exclude db generator script
 ]
 
 [tool.hatch.envs.dev]
@@ -230,7 +230,7 @@ ignore_merge_commits = true
 [tool.semantic_release.publish]
 dist_glob_patterns = [
     "dist/*",
-    "dist/gui/kkcalc-*-gui-*/*",
+    "dist/gui/kkcalc2-*-gui-*/*",
     "dist/docs/*"
 ]
 
@@ -277,7 +277,7 @@ html_theme = "pydata_sphinx_theme"
     default_version = "latest"
     display_github = true
     github_user = "xraysoftmat"
-    github_repo = "kkcalc"
+    github_repo = "kkcalc2"
     github_version = "main"
     doc_path = "docs"
 
@@ -285,4 +285,4 @@ html_theme = "pydata_sphinx_theme"
 [tool.esbonio.sphinx]
     # buildCommand = ["sphinx-build", "-M", "dirhtml", "./docs", "./docs/_build"]
     buildCommand = ["sphinx-build", "-M", "html", "./docs", "./docs/_build"] # sphinx-build -M html ./docs ./docs/_build
-    pythonCommand = ["${venv:kkcalc}"]
+    pythonCommand = ["${venv:kkcalc2}"]

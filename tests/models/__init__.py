@@ -1,5 +1,5 @@
 """
-Test module for KKCalc models classes.
+Test module for KKCalc2 models classes.
 
 Includes tests for
 - atomic scattering common properties,

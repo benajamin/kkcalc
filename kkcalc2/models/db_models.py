@@ -10,18 +10,18 @@ import scipy.optimize as opt
 from typing import Self, override, overload, Unpack
 
 import abc
-from kkcalc.stoich import stoichiometry as kk_stoichiometry
+from kkcalc2.stoich import stoichiometry as kk_stoichiometry
 
 # Import from submodules of models, as models.py will also call these classes.
-from kkcalc.models.polynomials import asp, asp_im, asp_re, asp_complex
-from kkcalc.models.factors import asf, asf_im, asf_re, asf_complex
-from kkcalc import conversions
-from kkcalc.models.common import (
+from kkcalc2.models.polynomials import asp, asp_im, asp_re, asp_complex
+from kkcalc2.models.factors import asf, asf_im, asf_re, asf_complex
+from kkcalc2 import conversions
+from kkcalc2.models.common import (
     PROPERTIES_DICT,
 )
 
 # Load the real/imag scattering factors as they vary with energy
-from kkcalc.asf_database import ASF_DATABASE
+from kkcalc2.asf_database import ASF_DATABASE
 
 
 class asp_db_abstract(asp, metaclass=abc.ABCMeta):
@@ -153,7 +153,7 @@ class asp_db_abstract(asp, metaclass=abc.ABCMeta):
 
         See Also
         --------
-        kkcalc.models.db_models.asp_db_extended.extend_data_with_db : Method to extend user data with
+        kkcalc2.models.db_models.asp_db_extended.extend_data_with_db : Method to extend user data with
             database data, where `merge_domain` truncates the data.
         """
         data_e = np.asarray(data_e)
@@ -426,8 +426,8 @@ class asp_db_im(asp_db_abstract, asp_im):
     See Also
     --------
     asf_database : The atomic scattering factor module for KK calc, where data is sourced from Briggs and Lighthill, and Henke et al.
-    kkcalc.models.polynomials.asp_im : The atomic scattering polynomial object for the imaginary component of the scattering factor.
-    kkcalc.models.common.atomic_scattering : Base class for atomic scattering objects.
+    kkcalc2.models.polynomials.asp_im : The atomic scattering polynomial object for the imaginary component of the scattering factor.
+    kkcalc2.models.common.atomic_scattering : Base class for atomic scattering objects.
     """
 
     def __init__(
@@ -525,8 +525,8 @@ class asp_db_complex(asp_complex):
     See Also
     --------
     asf_database : The atomic scattering factor module for KK calc, where data is sourced from Briggs and Lighthill, and Henke et al.
-    kkcalc.models.polynomials.asp_complex : The atomic scattering polynomial object for the complex component of the scattering factor.
-    kkcalc.models.common.atomic_scattering : Base class for atomic scattering objects.
+    kkcalc2.models.polynomials.asp_complex : The atomic scattering polynomial object for the complex component of the scattering factor.
+    kkcalc2.models.common.atomic_scattering : Base class for atomic scattering objects.
     """
 
     def __init__(
@@ -681,8 +681,8 @@ class asp_db_extended(asp):
     --------
     asf_database : The atomic scattering factor module for KK calc, where data is sourced from Briggs and Lighthill, and Henke et al.
     asp_db : The atomic scattering polynomial object for the imaginary component of the scattering factor for a given stoichiometry.
-    kkcalc.models.polynomials.asp_im : The atomic scattering polynomial object for the imaginary component of the scattering factor.
-    kkcalc.models.common.atomic_scattering : Base class for atomic scattering objects.
+    kkcalc2.models.polynomials.asp_im : The atomic scattering polynomial object for the imaginary component of the scattering factor.
+    kkcalc2.models.common.atomic_scattering : Base class for atomic scattering objects.
     """
 
     @overload
@@ -1354,7 +1354,7 @@ if __name__ == "__main__":
     data_PS = np.genfromtxt(data_file, skip_header=4)
 
     # Convert to KK Calc objects
-    from kkcalc.models import asf_im, asf_re
+    from kkcalc2.models import asf_im, asf_re
 
     assert data_PS.shape[1] == 2, "Data file must have two columns"
     asf_PS = asf_im(

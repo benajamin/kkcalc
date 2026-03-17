@@ -4,7 +4,7 @@ Allows the modification of material properties such as name, stoichiometry, numb
 """
 
 from PyQt6 import QtWidgets, QtCore, QtGui
-from kkcalc.models import (
+from kkcalc2.models import (
     asf_abstract,
     asp_abstract,
     asf_re,
@@ -18,7 +18,7 @@ from kkcalc.models import (
     asp_db_im,
     asp_db_extended,
 )
-from kkcalc.stoich import stoichiometry
+from kkcalc2.stoich import stoichiometry
 
 
 class kk_object_modifier(QtWidgets.QWidget):

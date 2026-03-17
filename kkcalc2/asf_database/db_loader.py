@@ -59,10 +59,10 @@ def load_asf_database() -> dict[int, ASFElement]:
     # For package distribution, use pkgutil to load the data file instead of file paths
     json_database = None
     try:
-        gzip_json_data = pkgutil.get_data("kkcalc.asf_database", "ASF.json.gz")
+        gzip_json_data = pkgutil.get_data("kkcalc2.asf_database", "ASF.json.gz")
         if gzip_json_data is None:
             # Try to load the uncompressed version
-            json_data = pkgutil.get_data("kkcalc.asf_database", "ASF.json")
+            json_data = pkgutil.get_data("kkcalc2.asf_database", "ASF.json")
             if json_data is None:
                 raise FileNotFoundError("ASF database file not found in package.")
             else:

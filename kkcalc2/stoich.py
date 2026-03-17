@@ -24,13 +24,13 @@ except ImportError:
     has_periodictable = False
 
 # Internal
-from kkcalc.asf_database import ASF_DATABASE, ASFElement  # noqa: E402
+from kkcalc2.asf_database import ASF_DATABASE, ASFElement  # noqa: E402
 
 if TYPE_CHECKING:
     # Do not compile at runtime due to circular import.
-    from kkcalc.models.db_models import asp_db_im, asp_db_re, asp_db_complex
+    from kkcalc2.models.db_models import asp_db_im, asp_db_re, asp_db_complex
     from periodictable.formulas import Formula
-    from kkcalc.models.common import (
+    from kkcalc2.models.common import (
         PROPERTIES_DICT,
     )
 
@@ -534,7 +534,7 @@ class stoichiometry:
         Parameters
         ----------
         **kwargs
-            Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` such as:
+            Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` such as:
             - `number_density` : float
             - `density` : float
             - `stoich` : stoichiometry
@@ -546,7 +546,7 @@ class stoichiometry:
         asp_db_im
             An object representing the piecewise polynomial calculated from the summation of scattering factor data.
         """
-        from kkcalc.models.db_models import asp_db_im
+        from kkcalc2.models.db_models import asp_db_im
 
         return asp_db_im(self, **kwargs)
 
@@ -565,7 +565,7 @@ class stoichiometry:
         Parameters
         ----------
         **kwargs
-            Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` such as:
+            Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` such as:
             - `number_density` : float
             - `density` : float
             - `stoich` : stoichiometry
@@ -577,7 +577,7 @@ class stoichiometry:
         asp_db_re
             An object representing the dispersive piecewise polynomial calculated from the summation of scattering factor data.
         """
-        from kkcalc.models.db_models import asp_db_re
+        from kkcalc2.models.db_models import asp_db_re
 
         return asp_db_re(self, **kwargs)
 
@@ -594,7 +594,7 @@ class stoichiometry:
         Parameters
         ----------
         **kwargs
-            Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` such as:
+            Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` such as:
             - `number_density` : float
             - `density` : float
             - `stoich` : stoichiometry
@@ -606,7 +606,7 @@ class stoichiometry:
         asp_db_complex
             An object representing the complex piecewise polynomial calculated from the summation of scattering factor data.
         """
-        from kkcalc.models.db_models import asp_db_complex
+        from kkcalc2.models.db_models import asp_db_complex
 
         return asp_db_complex(self, **kwargs)
 

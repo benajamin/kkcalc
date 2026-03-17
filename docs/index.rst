@@ -2,7 +2,7 @@
 
 .. include:: ../README.rst
 
-.. list-table:: KKCalc Features
+.. list-table:: KKCalc2 Features
   :widths: 20 80
   :header-rows: 1
 
@@ -23,11 +23,11 @@
 Links
 #####
 
-Please raise any `issues <https://github.com/xraysoftmat/kkcalc/issues>`_ here.
+Please raise any `issues <https://github.com/xraysoftmat/kkcalc-xraysoftmat/issues>`_ here.
 
-- Development (Github): https://github.com/xraysoftmat/kkcalc/
-- Documentation (ReadtheDocs): https://kkcalc.readthedocs.io/
-- PyPI: https://pypi.python.org/pypi/kkcalc/
+- Development (Github): https://github.com/xraysoftmat/kkcalc-xraysoftmat/
+- Documentation (ReadtheDocs): https://kkcalc2.readthedocs.io/
+- PyPI: https://pypi.python.org/pypi/kkcalc2/
 
 
 .. toctree::

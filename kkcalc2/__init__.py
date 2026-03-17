@@ -13,9 +13,9 @@ of Kramer-Kronig transforms. In particular, the module provides the following cl
 """
 
 import importlib.metadata
-from kkcalc.stoich import stoichiometry
-from kkcalc import transforms
-from kkcalc.models import (
+from kkcalc2.stoich import stoichiometry
+from kkcalc2 import transforms
+from kkcalc2.models import (
     conversions,
     polynomials,
     factors,
@@ -23,7 +23,7 @@ from kkcalc.models import (
     PROPERTIES_DICT,
     PROPERTIES_DICT_NO_STOICH,
 )
-from kkcalc import models
+from kkcalc2 import models
 
 
 def get_installed_packages() -> tuple[list[str], list[str]]:
@@ -49,7 +49,7 @@ installed_packages, _ = get_installed_packages()
 installed_packages = [pkg.lower() for pkg in installed_packages]
 try:
     # Import the GUI module if appropriate packages are available:
-    req = importlib.metadata.requires("kkcalc")
+    req = importlib.metadata.requires("kkcalc2")
     if req is not None:
         for value in req:
             value = value.replace("'", '"')
@@ -63,23 +63,23 @@ try:
                 # Check that the module is available
                 if name not in installed_packages:
                     raise ImportError(
-                        f"kkcalc initialisation: Required package '{name}' is not installed."
+                        f"kkcalc2 initialisation: Required package '{name}' is not installed."
                     )
                 # Or check that the module can be imported...
                 # module = __import__(name)
 
         # Attempted import on GUI module.
-        from kkcalc.gui import kk_gui
+        from kkcalc2.gui import kk_gui
     else:
-        print("kkcalc initialisation: No requirements loaded.")
+        print("kkcalc2 initialisation: No requirements loaded.")
 
 except ImportError as e:
     if name is not None:
         print(
-            f"kkcalc initialisation: GUI module import failed, requires module:\t{name}"
+            f"kkcalc2 initialisation: GUI module import failed, requires module:\t{name}"
         )
     else:
-        print("kkcalc initialisation: GUI module import failed.", e)
+        print("kkcalc2 initialisation: GUI module import failed.", e)
 
 # Cleanup extra names
 locs = locals()
@@ -95,7 +95,7 @@ if "installed_packages" in locs:
     del installed_packages
 
 # Define the version of the package:
-__version__ = importlib.metadata.version("kkcalc")
+__version__ = importlib.metadata.version("kkcalc2")
 
 # Traversable items
 if "kk_gui" in locals():

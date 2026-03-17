@@ -7,7 +7,7 @@ https://en.wikipedia.org/wiki/Hilbert_transform#Table_of_selected_Hilbert_transf
 """
 
 import numpy as np
-import kkcalc as kkc
+import kkcalc2 as kkc
 
 
 class TestKKTransforms:

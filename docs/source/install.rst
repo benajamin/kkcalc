@@ -6,15 +6,15 @@ Installation
 Sources
 #######
 
-The ``KKCalc`` package requires Python 3.11+, and is available from:
+The ``KKCalc2`` package requires Python 3.11+, and is available from:
 
-- PyPI: https://pypi.python.org/pypi/kkcalc/
+- PyPI: https://pypi.python.org/pypi/kkcalc2/
 - GitHub: https://github.com/xraysoftmat/kkcalc
 
 Virtual Environment
 ###################
 
-Once you have installed Python and added it to the path, we recommend adding a virtual environment to manage dependencies and avoid conflicts with other Python packages, before installing ``KKCalc``.
+Once you have installed Python and added it to the path, we recommend adding a virtual environment to manage dependencies and avoid conflicts with other Python packages, before installing ``KKCalc2``.
 You can create a virtual environment using the following commands (replace ``myvenv`` with something useful):
 
 .. code-block:: bash
@@ -35,9 +35,9 @@ Then install the package using ``pip`` (python-install-package via PyPI):
 
 .. code-block:: bash
 
-    (myvenv) > pip install kkcalc # install regular project
+    (myvenv) > pip install kkcalc2 # install regular project
     # or
-    (myvenv) > pip install kkcalc --group gui # PEP735
+    (myvenv) > pip install kkcalc2 --group gui # PEP735
 
 
 Further details about `pip` usage can be found in the [PyPI installation tutorial](https://packaging.python.org/tutorials/installing-packages/).
@@ -47,10 +47,10 @@ Or alternatively, clone the source code using ``git``:
 .. code-block:: bash
 
     (myenv) > git clone http://github.com/xraysoftmat/kkcalc # or your own fork/branch.
-    (myenv) > pip install ./kkcalc/  # use -e for editable mode, recommended when changing code
+    (myenv) > pip install ./kkcalc2/  # use -e for editable mode, recommended when changing code
 
 
-Following `PEP735 <https://peps.python.org/pep-0735/>`_, ``KKCalc`` also has dependency groups established. You may need to upgrade ``pip>=25.1`` to use dependency groups. The following groups are available:
+Following `PEP735 <https://peps.python.org/pep-0735/>`_, ``KKCalc2`` also has dependency groups established. You may need to upgrade ``pip>=25.1`` to use dependency groups. The following groups are available:
 
 - ``docs`` : Install Sphinx, numpydoc and other packages required for building the documentation.
 - ``gui`` : Install graphic packages (PyQT, matplotlib, pandas).
@@ -69,8 +69,8 @@ You can check the package is installed:
 
 .. code-block:: python
 
-    >>> import kkcalc
-    >>> print(kkcalc.__version__)
+    >>> import kkcalc2
+    >>> print(kkcalc2.__version__)
 
 .. parsed-literal::
     \ |release|  # or whatever the latest version is
@@ -82,12 +82,12 @@ If you've installed the GUI dependency group, you can then run the module:
 
 .. code-block:: bash
 
-    (myvenv) > python -m kkcalc
+    (myvenv) > python -m kkcalc2
 
 The modularised GUI interface can be used without requiring the python API.
 
 .. image:: ./_static/kk_calc.jpg
-   :alt: Screenshot of the KKcalc GUI interface
+   :alt: Screenshot of the KKCalc GUI interface
    :scale: 50%
    :align: center
 

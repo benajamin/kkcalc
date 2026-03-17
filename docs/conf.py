@@ -15,7 +15,7 @@ from datetime import date
 from sphinx_pyproject import SphinxConfig
 
 # Local imports
-import kkcalc
+import kkcalc2
 
 path = os.path.abspath(os.path.dirname(__file__))
 pyproj = os.path.join(path, "../pyproject.toml")
@@ -55,13 +55,13 @@ sys.path.insert(0, os.path.abspath("."))
 # Insert the project root
 # sys.path.insert(0, os.path.abspath(".."))
 # Insert the package root
-sys.path.insert(0, "../kkcalc/")
+sys.path.insert(0, "../kkcalc2/")
 
 os.environ["MPLBACKEND"] = "Agg"  # avoid tkinter import errors on rtfd.io
 
 # -- Project information -----------------------------------------------------
 
-project = "KKCalc"
+project = "KKCalc2"
 copyright = (
     f"2024-{date.today().year}, Matthew Gebert, Benjamin Watts, kkcalc maintainers"
 )
@@ -75,8 +75,8 @@ author = "Matthew Gebert, Benjamin Watts"
 
 # version = .__version__
 # The full version, including alpha/beta/rc tags.
-release = kkcalc.__version__
-version = kkcalc.__version__
+release = kkcalc2.__version__
+version = kkcalc2.__version__
 html_title = f"{project} v{version} Manual"
 
 # -- General configuration ---------------------------------------------------
@@ -146,9 +146,9 @@ latex_elements = {
 latex_documents = [
     (
         "index",
-        "kkcalc.tex",
-        "kkcalc Documentation",
-        "kkcalc maintainers",
+        "kkcalc2.tex",
+        "kkcalc2 Documentation",
+        "kkcalc2 maintainers",
         "manual",
     ),
 ]

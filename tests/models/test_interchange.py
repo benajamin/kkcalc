@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 # import warnings
-from kkcalc.models import (
+from kkcalc2.models import (
     asp_db_im,
     asp_db_re,
     # asp_db_im_extended,

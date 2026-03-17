@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import numpy as np
 from typing import Any
-from kkcalc.models.factors import KK_Datatype, KK_DATATYPE_DOCS
+from kkcalc2.models.factors import KK_Datatype, KK_DATATYPE_DOCS
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,

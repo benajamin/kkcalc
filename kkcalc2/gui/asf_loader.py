@@ -4,7 +4,7 @@ Allows the loading of raw data and duplication objects.
 """
 
 from PyQt6 import QtWidgets, QtCore
-from kkcalc.models import (
+from kkcalc2.models import (
     asf_abstract,
     asf,
     asf_re,
@@ -20,12 +20,12 @@ from kkcalc.models import (
     asp_db_complex_extended,
     KK_Datatype,
 )
-from kkcalc.gui.dialogs import (
+from kkcalc2.gui.dialogs import (
     factor_complexity_dialog,
     import_data_dialog,
     factor_dtype_dialog,
 )
-from kkcalc.gui.contrast_viewer import contrast_viewer
+from kkcalc2.gui.contrast_viewer import contrast_viewer
 import warnings
 
 
@@ -162,7 +162,7 @@ class kk_object_list(QtWidgets.QWidget):
         # Check if the object is an asf or asp base object; needs to be designated as real or imag.
         if obj.__class__ is asf or obj.__class__ is asp:
             # Create dialog to convert to real or imag
-            from kkcalc.gui.dialogs import factor_complexity_dialog
+            from kkcalc2.gui.dialogs import factor_complexity_dialog
 
             dialog = factor_complexity_dialog()
             dialog.setWindowTitle(

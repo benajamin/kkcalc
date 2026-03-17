@@ -10,17 +10,17 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Self, overload, Unpack, override
 import scipy.constants as sc
 
-from kkcalc.models.common import (
+from kkcalc2.models.common import (
     atomic_scattering,
     atomic_scattering_abstract,
     PROPERTIES_DICT,
     PROPERTIES_DICT_NO_STOICH,
 )
-from kkcalc import conversions, transforms
-from kkcalc.stoich import stoichiometry as kk_stoichiometry
+from kkcalc2 import conversions, transforms
+from kkcalc2.stoich import stoichiometry as kk_stoichiometry
 
 if TYPE_CHECKING:
-    from kkcalc.models.factors import (
+    from kkcalc2.models.factors import (
         asf as asf_type,
         asf_im,
         asf_re,
@@ -44,7 +44,7 @@ class asp_abstract(atomic_scattering_abstract, metaclass=abc.ABCMeta):
 
     See Also
     --------
-    kkcalc.models.common.atomic_scattering_abstract : Base interface for atomic scattering.
+    kkcalc2.models.common.atomic_scattering_abstract : Base interface for atomic scattering.
     """
 
     @property
@@ -85,7 +85,7 @@ class asp_abstract(atomic_scattering_abstract, metaclass=abc.ABCMeta):
         -------
         npt.NDArray | None
             The polynomial orders for the scattering factors, with length `M`. If None,
-            then kkcalc internally assumes the polynomial orders are by default [1, 0, -1, -2, -3].
+            then kkcalc2 internally assumes the polynomial orders are by default [1, 0, -1, -2, -3].
         """
         pass
 
@@ -523,11 +523,11 @@ class asp(asp_abstract, atomic_scattering):
         The polynomial coefficients of shape `(N, M)` for the scattering factors,
         defined on the intervals of `energies` where `M` is the number of coefficients.
     orders : npt.ArrayLike | None, optional
-        The polynomial orders for the scattering factors. If None, then kkcalc internally
+        The polynomial orders for the scattering factors. If None, then kkcalc2 internally
         assumes the polynomial orders are by default [1, 0, -1, -2, -3]. By default None.
         Must have length `M` if provided.
     **kwargs : Unpack[PROPERTIES_DICT], optional
-        Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` such as:
+        Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` such as:
         - `number_density` : float
         - `density` : float
         - `stoich` : stoichiometry
@@ -542,7 +542,7 @@ class asp(asp_abstract, atomic_scattering):
 
     See Also
     --------
-    kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+    kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
     """
 
     def __init__(
@@ -686,7 +686,7 @@ class asp(asp_abstract, atomic_scattering):
         ]  # Exclude the last bound
 
         # Check if class is asp_db, in which case the constructor cannot take energies.
-        from kkcalc.models import asp_db_abstract, asp_db_extended
+        from kkcalc2.models import asp_db_abstract, asp_db_extended
 
         if issubclass(cls, (asp_db_abstract, asp_db_extended)):
             obj = self.copy(**kwargs)  # Use kwargs not common_kwargs due to copying.
@@ -771,7 +771,7 @@ class asp(asp_abstract, atomic_scattering):
             coefs = coefs[index[:-1] & index[1:]]
 
             # Check if class is asp_db, in which case the constructor cannot take energies.
-            from kkcalc.models import asp_db_abstract, asp_db_extended
+            from kkcalc2.models import asp_db_abstract, asp_db_extended
 
             if issubclass(cls, (asp_db_abstract, asp_db_extended)):
                 obj = self.copy(**kwargs)
@@ -821,7 +821,7 @@ class asp(asp_abstract, atomic_scattering):
         -------
         npt.NDArray | None
             A 1D array of polynomial orders, with length M, where M is the number of coefficients.
-            If None, then kkcalc internally assumes the polynomial orders are by default [1, 0, -1, -2, -3].
+            If None, then kkcalc2 internally assumes the polynomial orders are by default [1, 0, -1, -2, -3].
         """
         return self._orders
 
@@ -848,10 +848,10 @@ class asp(asp_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.factors.asf : Atomic scattering factor object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.factors.asf : Atomic scattering factor object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
         """
-        from kkcalc.models.factors import asf as asf_type
+        from kkcalc2.models.factors import asf as asf_type
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)
@@ -998,11 +998,11 @@ class asp_im(asp):
         The polynomial coefficients of shape `(N, M)` for the scattering factors,
         defined on the intervals of `energies` where `M` is the number of coefficients.
     orders : npt.ArrayLike | None, optional
-        The polynomial orders for the scattering factors. If None, then kkcalc internally
+        The polynomial orders for the scattering factors. If None, then kkcalc2 internally
         assumes the polynomial orders are by default [1, 0, -1, -2, -3]. By default None.
         Must have length `M` if provided.
     **kwargs : Unpack[PROPERTIES_DICT], optional
-        Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` base class.
+        Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` base class.
     """
 
     def __init__(
@@ -1035,8 +1035,8 @@ class asp_im(asp):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp : Atomic scattering polynomial object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.polynomials.asp : Atomic scattering polynomial object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
         """
         common_kwargs = asp._properties_dict
         common_kwargs.update(kwargs)
@@ -1069,12 +1069,12 @@ class asp_im(asp):
 
         See Also
         --------
-        kkcalc.models.factors.asf_im : Atomic scattering factor object for the imaginary part.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.factors.asf_im : Atomic scattering factor object for the imaginary part.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
         """
         # TODO: Use np.integer instead of np.int_ for type hinting, when numpydoc supports it.
         # Use kwargs
-        from kkcalc.models.factors import asf_im
+        from kkcalc2.models.factors import asf_im
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)
@@ -1194,7 +1194,7 @@ class asp_im(asp):
             )
 
         # Import asf_re and create object
-        from kkcalc.models.factors import asf_re
+        from kkcalc2.models.factors import asf_re
 
         kwargs = self._properties_dict
         return asf_re(energies=imp_energies, factors=imp_real_factors, **kwargs)
@@ -1243,11 +1243,11 @@ class asp_im(asp):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp_complex : Atomic scattering polynomial object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
-        kkcalc.models.polynomials.asp_im.kk_transform : KK transform method.
+        kkcalc2.models.polynomials.asp_complex : Atomic scattering polynomial object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.polynomials.asp_im.kk_transform : KK transform method.
         """
-        from kkcalc.models.polynomials import asp_complex
+        from kkcalc2.models.polynomials import asp_complex
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)
@@ -1322,11 +1322,11 @@ class asp_im(asp):
 
         See Also
         --------
-        kkcalc.models.factors.asf_complex : Complex atomic scattering factor object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
-        kkcalc.models.polynomials.asp_im.kk_transform : KK transform method.
+        kkcalc2.models.factors.asf_complex : Complex atomic scattering factor object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.polynomials.asp_im.kk_transform : KK transform method.
         """
-        from kkcalc.models.factors import asf_complex
+        from kkcalc2.models.factors import asf_complex
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)  # type: ignore #PROPERTIES_DICT_NO_STOICH is a subset of PROPERTIES_DICT
@@ -1503,11 +1503,11 @@ class asp_re(asp):
         The polynomial coefficients of shape `(N, M)` for the scattering factors,
         defined on the intervals of `energies` where `M` is the number of coefficients.
     orders : npt.ArrayLike | None, optional
-        The polynomial orders for the scattering factors. If None, then kkcalc internally
+        The polynomial orders for the scattering factors. If None, then kkcalc2 internally
         assumes the polynomial orders are by default [1, 0, -1, -2, -3]. By default None.
         Must have length `M` if provided.
     **kwargs : Unpack[PROPERTIES_DICT], optional
-        Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` base class.
+        Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` base class.
     """
 
     def __init__(
@@ -1538,8 +1538,8 @@ class asp_re(asp):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp : Atomic scattering polynomial object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.polynomials.asp : Atomic scattering polynomial object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
         """
         common_kwargs = asp._properties_dict
         common_kwargs.update(kwargs)
@@ -1570,11 +1570,11 @@ class asp_re(asp):
 
         See Also
         --------
-        kkcalc.models.factors.asf_re : Atomic scattering factor object for the real part.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.factors.asf_re : Atomic scattering factor object for the real part.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
         """
         # TODO: Use np.integer instead of np.int_ for type hinting, when numpydoc supports it.
-        from kkcalc.models.factors import asf_re
+        from kkcalc2.models.factors import asf_re
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)
@@ -1694,7 +1694,7 @@ class asp_re(asp):
             )
 
         # Import asf_im and create object
-        from kkcalc.models.factors import asf_im
+        from kkcalc2.models.factors import asf_im
 
         common_kwargs = self._properties_dict
         return asf_im(energies=imp_energies, factors=imp_imag_factors, **common_kwargs)
@@ -1744,10 +1744,10 @@ class asp_re(asp):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp_complex : Atomic scattering polynomial object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.polynomials.asp_complex : Atomic scattering polynomial object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
         """
-        from kkcalc.models.polynomials import asp_complex
+        from kkcalc2.models.polynomials import asp_complex
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)  # type: ignore #PROPERTIES_DICT_NO_STOICH is a subset of PROPERTIES_DICT
@@ -1812,11 +1812,11 @@ class asp_re(asp):
 
         See Also
         --------
-        kkcalc.models.factors.asf_complex : Complex atomic scattering factor object.
-        kkcalc.models.common.atomic_scattering : Base class for atomic scattering factors.
-        kkcalc.models.polynomials.asp_re.kk_transform_inv : Inverse KK transform method.
+        kkcalc2.models.factors.asf_complex : Complex atomic scattering factor object.
+        kkcalc2.models.common.atomic_scattering : Base class for atomic scattering factors.
+        kkcalc2.models.polynomials.asp_re.kk_transform_inv : Inverse KK transform method.
         """
-        from kkcalc.models.factors import asf_complex
+        from kkcalc2.models.factors import asf_complex
 
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)  # type: ignore #PROPERTIES_DICT_NO_STOICH is a subset of PROPERTIES_DICT
@@ -1939,7 +1939,7 @@ class asp_complex(asp_abstract, atomic_scattering):
         If True, then the energies will be truncated to the common domain
         between the real and imaginary parts. Default is True.
     **kwargs : Unpack[PROPERTIES_DICT]
-        Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` class.
+        Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` class.
         Default values are copied from the real part object unless `None` (then the imaginary part object).
         Provided values will override the defaults.
     """
@@ -2197,7 +2197,7 @@ class asp_complex(asp_abstract, atomic_scattering):
         """
         common_kwargs = self._properties_dict
         common_kwargs.update(kwargs)
-        from kkcalc.models.factors import asf_complex
+        from kkcalc2.models.factors import asf_complex
 
         energies = target_energies if target_energies is not None else self.energies
         return asf_complex(

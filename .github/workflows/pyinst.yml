@@ -6,7 +6,7 @@
 # - `BUILD_NAME` : The name of the built executable package without file extension.
 
 name: GUI 💻 (PyInstaller App Build)
-run-name: ${{ github.actor }} - ${{ github.event.inputs.os }} kkcalc GUI 💻
+run-name: ${{ github.actor }} - ${{ github.event.inputs.os }} kkcalc2 GUI 💻
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}-pyinstaller-${{ github.event.inputs.os }}
@@ -79,16 +79,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller Pillow
         pip install . --group gui -v
-        echo "MODULE_VERSION=$(python -c "from importlib.metadata import version; print(version('kkcalc'))")"
-        echo "MODULE_VERSION=$(python -c "from importlib.metadata import version; print(version('kkcalc'))")" >> $GITHUB_ENV
+        echo "MODULE_VERSION=$(python -c "from importlib.metadata import version; print(version('kkcalc2'))")"
+        echo "MODULE_VERSION=$(python -c "from importlib.metadata import version; print(version('kkcalc2'))")" >> $GITHUB_ENV
 
     - name: Build executable name variable
       id: build-name
       shell: bash
       run: |
-        echo "BUILD_NAME=kkcalc-${{ env.MODULE_VERSION }}-gui-${{ inputs.os}}"
-        echo "BUILD_NAME=kkcalc-${{ env.MODULE_VERSION }}-gui-${{ inputs.os}}" >> $GITHUB_ENV
-        echo "BUILD_NAME=kkcalc-${{ env.MODULE_VERSION }}-gui-${{ inputs.os}}" >> $GITHUB_OUTPUT
+        echo "BUILD_NAME=kkcalc2-${{ env.MODULE_VERSION }}-gui-${{ inputs.os}}"
+        echo "BUILD_NAME=kkcalc2-${{ env.MODULE_VERSION }}-gui-${{ inputs.os}}" >> $GITHUB_ENV
+        echo "BUILD_NAME=kkcalc2-${{ env.MODULE_VERSION }}-gui-${{ inputs.os}}" >> $GITHUB_OUTPUT
 
     ## Alternative way to make spec file and build, kept for reference.
     ## Does not provide functionality to remove unwanted DLLs like the custom spec file does.
@@ -96,12 +96,12 @@ jobs:
     # - name: Make spec file with PyInstaller
     #   run:
     #     >
-    #     pyi-makespec .\kkcalc\__main__.py
+    #     pyi-makespec .\kkcalc2\__main__.py
     #     --name "${{ env.BUILD_NAME }}"
     #     --onefile
     #     --windowed
-    #     --add-data "kkcalc/data;kkcalc/data"
-    #     --add-data "kkcalc/asf_database/ASF.json.gz;kkcalc/asf_database"
+    #     --add-data "kkcalc2/data;kkcalc2/data"
+    #     --add-data "kkcalc2/asf_database/ASF.json.gz;kkcalc2/asf_database"
     #     --icon "docs/source/_static/logo2.png"
     #
     # - name: Build executable with PyInstaller
@@ -112,7 +112,7 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller .github/kkcalc-gui.spec -- -n "${{ env.BUILD_NAME }}"
+        pyinstaller .github/kkcalc2-gui.spec -- -n "${{ env.BUILD_NAME }}"
 
     - name : List built executable files
       shell: bash

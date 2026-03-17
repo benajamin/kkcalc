@@ -3,7 +3,7 @@
 import pytest
 import periodictable.formulas as ptf
 import periodictable as pt
-from kkcalc import stoichiometry as kk_stoich
+from kkcalc2 import stoichiometry as kk_stoich
 
 
 class basic_stoichs:

@@ -2,12 +2,12 @@
 This example demonstrates how to perform a simple Kramers-Kronig transform on a dataset.
 """
 
-from kkcalc.models import (
+from kkcalc2.models import (
     asf_im,
     asp_db_im,
     asp_db_im_extended,
 )
-from kkcalc import stoichiometry
+from kkcalc2 import stoichiometry
 import numpy as np
 import matplotlib.pyplot as plt
 import os

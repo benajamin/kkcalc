@@ -14,10 +14,10 @@ from matplotlib.widgets import SpanSelector
 import matplotlib.pyplot as plt
 import pkgutil
 
-from kkcalc.gui.asf_viewer import asf_viewer, GraphType
-from kkcalc.gui.asf_modifier import kk_object_modifier
-from kkcalc.gui.asf_loader import kk_object_list
-from kkcalc.models import (
+from kkcalc2.gui.asf_viewer import asf_viewer, GraphType
+from kkcalc2.gui.asf_modifier import kk_object_modifier
+from kkcalc2.gui.asf_loader import kk_object_list
+from kkcalc2.models import (
     asf_abstract,
     asp_abstract,
     asp_im,
@@ -25,7 +25,7 @@ from kkcalc.models import (
     asf_im,
     asf_re,
 )
-from kkcalc.stoich import stoichiometry
+from kkcalc2.stoich import stoichiometry
 
 
 class kk_gui(QtWidgets.QWidget):

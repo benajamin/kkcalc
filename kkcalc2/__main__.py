@@ -19,8 +19,8 @@ import PyQt6.QtWidgets as QtWidgets
 hasQT: bool
 try:
     import PyQt6  # noqa: F401
-    from kkcalc.gui.kk_gui import kk_gui
-    from kkcalc.models import asf_im
+    from kkcalc2.gui.kk_gui import kk_gui
+    from kkcalc2.models import asf_im
 
     hasQT = True
 except ImportError:
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         root = tk.Tk()
         root.withdraw()  # Hide the main window
         messagebox.showerror(
-            "KKCalc Error",
+            "KKCalc2 Error",
             "PyQt6 is not installed. Please install PyQt6 to run KKCalc.",
         )
     else:

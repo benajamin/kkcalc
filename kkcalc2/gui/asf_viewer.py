@@ -11,8 +11,8 @@ from enum import Enum
 import matplotlib.pyplot as plt
 import matplotlib.colors
 from typing import Literal
-from kkcalc.models import asf_abstract, asp_abstract, asf_im, asf_re, asf_complex
-from kkcalc.models.factors import KK_Datatype
+from kkcalc2.models import asf_abstract, asp_abstract, asf_im, asf_re, asf_complex
+from kkcalc2.models.factors import KK_Datatype
 import numpy.typing as npt
 import numpy as np
 import warnings
@@ -771,9 +771,9 @@ if __name__ == "__main__":
     ui = asf_viewer()
 
     # Import kkcalc functions
-    from kkcalc.asf_database import asp_db_extended
-    from kkcalc.models.common import atomic_scattering
-    from kkcalc.stoich import stoichiometry
+    from kkcalc2.asf_database import asp_db_extended
+    from kkcalc2.models.common import atomic_scattering
+    from kkcalc2.stoich import stoichiometry
 
     # Import some example data
     import numpy as np

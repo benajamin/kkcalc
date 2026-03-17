@@ -1,12 +1,12 @@
 =====================================
- KKcalc
+ KKCalc2
 =====================================
 
-``kkcalc`` is a comprehensive toolkit for calculating Kramers Kronig transforms of X-ray absorption/dispersion data, and is built to the feature-rich standards of `xraysoftmat <https://github.com/xraysoftmat>`_.
+``kkcalc2`` is a comprehensive toolkit for calculating Kramers Kronig transforms of X-ray absorption/dispersion data, and is built to the feature-rich standards of `xraysoftmat <https://github.com/xraysoftmat>`_.
 
 |tool-semver| |tool-black| |tool-ruff| |tool-numpydoc|
 
-|PyPI Version| |PyPI Version2| |readthedocs| |Coveralls| |Pre-commit|
+|PyPI Version2| |readthedocs| |Coveralls| |Pre-commit|
 
 |PyTest| |Linting| |Documentation|
 
@@ -51,7 +51,7 @@
 Introduction
 ############
 
-``kkcalc`` is an open-source `python` package to calculate the Kramers-Kronig (inverse) transform of X-ray absorption (dispersion) data:
+``kkcalc2`` is an open-source `python` package to calculate the Kramers-Kronig (inverse) transform of X-ray absorption (dispersion) data:
 
 .. note: mathjax github requires double backslashes to properly compute.
 
@@ -59,7 +59,7 @@ $$f_2(E) = \\frac{2}{\\pi} P \\int_{0}^{\\infty}\\frac{x f_1(x)}{x^2 - E^2} dx +
 
 where $f_1$ and $f_2$ are the real and imaginary parts of the complex index of refraction, respectively, $\\mathcal{Z}^\\star$ is the relativistic correction, and $P$ denotes the Cauchy principal value at ($x=E$).
 
-``kkcalc`` uses a polynomial representation algorithm developed by Watts [1]_.
+``kkcalc2`` uses a polynomial representation algorithm developed by Watts [1]_.
 
 This package provides an object oriented API, to evaluate optical constants (index of refraction, absorption and dispersion, etc.), extend measurement spectra with databases, or can be accessed through a PyQT6 GUI interface. Documentation can be found at  `readthedocs <https://kkcalc.rtfd.org/>`_, and releases (including documentation and executable builds) can be found at `github <https://github.com/xraysoftmat/kkcalc>`_.
 

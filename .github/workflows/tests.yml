@@ -56,7 +56,7 @@ jobs:
 
       - name: Test coverage
         run: |
-          coverage run --source=kkcalc -m pytest tests/
+          coverage run --source=kkcalc2 -m pytest tests/
           coverage xml  # generates coverage.xml for Coveralls
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,7 +5,7 @@ Defines the types of data that can be used, and conversion between.
 """
 
 # In polynomials.py, the equivalent import is only done via type checking or in functions, to prevent recursion.
-from kkcalc.models.polynomials import (
+from kkcalc2.models.polynomials import (
     asp as asp_type,
     asp_abstract,
     asp_im,
@@ -14,17 +14,17 @@ from kkcalc.models.polynomials import (
 )
 
 ## ..
-from kkcalc.models.common import (
+from kkcalc2.models.common import (
     atomic_scattering_abstract,
     atomic_scattering,
     PROPERTIES_DICT,
     PROPERTIES_DICT_NO_STOICH,
 )
-from kkcalc import conversions
-from kkcalc.stoich import (
+from kkcalc2 import conversions
+from kkcalc2.stoich import (
     stoichiometry as kk_stoichiometry,
 )  # To prevent overlap use with the `stoichiometry` argument.
-from kkcalc.transforms import DEF_ITER, DEF_TOL
+from kkcalc2.transforms import DEF_ITER, DEF_TOL
 
 import numpy as np
 import numpy.typing as npt
@@ -298,7 +298,7 @@ class asf_abstract(atomic_scattering_abstract, metaclass=abc.ABCMeta):
 
         See Also
         --------
-        kkcalc.models.factors.asf_abstract.to_refractive : Method
+        kkcalc2.models.factors.asf_abstract.to_refractive : Method
             Converts the atomic scattering factors to refractive values, with density parameter arguments.
         """
         if self.number_density is not None:
@@ -355,7 +355,7 @@ class asf_abstract(atomic_scattering_abstract, metaclass=abc.ABCMeta):
 
         See Also
         --------
-        kkcalc.models.factors.asf_abstract.refractive : Property
+        kkcalc2.models.factors.asf_abstract.refractive : Property
             Converts the atomic scattering factors to refractive values.
         """
         if (
@@ -611,7 +611,7 @@ class asf_abstract(atomic_scattering_abstract, metaclass=abc.ABCMeta):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         raise NotImplementedError("Must be implemented in subclass.")
 
@@ -817,7 +817,7 @@ class asf(asf_abstract, atomic_scattering):
     scale_to_database : bool, optional
         Whether to scale the atomic scattering factors to the Henke database scale.
     **kwargs :
-        Additional keyword arguments for the `kkcalc.models.common.atomic_scattering` such as:
+        Additional keyword arguments for the `kkcalc2.models.common.atomic_scattering` such as:
         - `number_density` : float
         - `density` : float
         - `stoich` : stoichiometry
@@ -826,7 +826,7 @@ class asf(asf_abstract, atomic_scattering):
 
     See Also
     --------
-    kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+    kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
     """
 
     def __init__(
@@ -996,7 +996,7 @@ class asf(asf_abstract, atomic_scattering):
         """
         if self.stoichiometry is not None:
             if isinstance(self, asf_re):
-                from kkcalc.models.db_models import asp_db_re
+                from kkcalc2.models.db_models import asp_db_re
 
                 self.factors = asp_db_re.scale_data(
                     self.energies,
@@ -1007,7 +1007,7 @@ class asf(asf_abstract, atomic_scattering):
                 )
                 return
             elif isinstance(self, asf_im):
-                from kkcalc.models.db_models import asp_db_im
+                from kkcalc2.models.db_models import asp_db_im
 
                 self.factors = asp_db_im.scale_data(
                     self.energies,
@@ -1045,8 +1045,8 @@ class asf(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp : Atomic scattering polynomial object.
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.polynomials.asp : Atomic scattering polynomial object.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Get the existing properties, update with kwargs
         common_kwargs = self._properties_dict
@@ -1119,7 +1119,7 @@ class asf(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Convert energy and beta data to numpy arrays.
         energies = np.asarray(energies)
@@ -1296,7 +1296,7 @@ class asf_re(asf):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Get the existing properties, update with kwargs
         common_kwargs = asf._properties_dict
@@ -1333,8 +1333,8 @@ class asf_re(asf):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp : Atomic scattering polynomial object.
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.polynomials.asp : Atomic scattering polynomial object.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Get the existing properties, update with kwargs
         common_kwargs = self._properties_dict
@@ -1419,7 +1419,7 @@ class asf_re(asf):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         return asf_re.from_refractive(
             energies=energies,
@@ -1487,7 +1487,7 @@ class asf_re(asf):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Convert the real refractive index value to $\delta$ then use `from_deltas`.
         deltas = 1 - refractive_index
@@ -1591,8 +1591,8 @@ class asf_re(asf):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp_complex : Complex atomic scattering polynomial class.
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.polynomials.asp_complex : Complex atomic scattering polynomial class.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Return asp object
         re_asp = self.to_atomic_scattering_polynomial()
@@ -1649,7 +1649,7 @@ class asf_re(asf):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         re: asp_re = self.to_atomic_scattering_polynomial()
         im: asf_im = re.kk_transform_inv(
@@ -1689,7 +1689,7 @@ class asf_im(asf):
         Whether to scale the data to the background from the stoichiometry.
         By default False.
     **kwargs : Unpack[PROPERTIES_DICT]
-        Keyword arguments for the `kkcalc.models.atomic_scattering` base class.
+        Keyword arguments for the `kkcalc2.models.atomic_scattering` base class.
     """
 
     def __init__(
@@ -1798,7 +1798,7 @@ class asf_im(asf):
 
         See Also
         --------
-        kkcalc.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
+        kkcalc2.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
         """
         # TODO: Add documentation about what the NEXAFS scaling is...
         return conversions.ASF_to_NEXAFS(self.energies, self.factors)
@@ -1820,7 +1820,7 @@ class asf_im(asf):
 
         See Also
         --------
-        kkcalc.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
+        kkcalc2.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
         """
         return self.energies, self.NEXAFS
 
@@ -1860,8 +1860,8 @@ class asf_im(asf):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
-        kkcalc.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
         """
         # TODO: update docs about what the factors in the conversion are about...
         return cls(
@@ -1939,7 +1939,7 @@ class asf_im(asf):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         return asf_im.from_refractive(
             energies=energies,
@@ -2190,7 +2190,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
     See Also
     --------
-    kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial.
+    kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial.
     """
 
     def __init__(
@@ -2488,7 +2488,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.polynomials.asp_complex : Complex atomic scattering polynomial object.
+        kkcalc2.models.polynomials.asp_complex : Complex atomic scattering polynomial object.
         """
         # Get the existing properties, update with kwargs
         common_kwargs = self._properties_dict
@@ -2574,7 +2574,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
+        kkcalc2.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
         """
         return self.im.NEXAFS
 
@@ -2595,7 +2595,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
+        kkcalc2.models.conversions.ASF_to_NEXAFS : Converts atomic scattering factors to NEXAFS/XANES/Photoabsorption data.
         """
         return self.energies, self.NEXAFS
 
@@ -2637,7 +2637,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         energies = np.asarray(energies)
         if NEXAFS.dtype != np.floating:
@@ -2720,7 +2720,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Convert energy and beta data to numpy arrays.
         energies = np.asarray(energies)
@@ -2824,7 +2824,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
+        kkcalc2.models.common.atomic_scattering : Common attributes between atomic scattering factor and polynomial models.
         """
         # Convert energy and beta data to numpy arrays.
         energies = np.asarray(energies)
@@ -2897,7 +2897,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : The base class for material attributes.
+        kkcalc2.models.common.atomic_scattering : The base class for material attributes.
         """
         re = asf_re.from_asf(asf(energies, factors.real, **kwargs))
         im = asf_im.from_asf(asf(energies, factors.imag, **kwargs))
@@ -2920,7 +2920,7 @@ class asf_complex(asf_abstract, atomic_scattering):
 
         See Also
         --------
-        kkcalc.models.common.atomic_scattering : The base class for material attributes.
+        kkcalc2.models.common.atomic_scattering : The base class for material attributes.
         """
         # Copy the object properties
         common_kwargs = self._properties_dict

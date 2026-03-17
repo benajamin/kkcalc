@@ -20,7 +20,7 @@ Each element in the database is a dictionary consisting of the following keys:
 for the imaginary part of the scattering factors, corresponding to the energies intervals.
 """
 
-from kkcalc.asf_database.db_loader import load_asf_database, ASFElement
+from kkcalc2.asf_database.db_loader import load_asf_database, ASFElement
 
 ASF_DATABASE: dict[int, ASFElement] = (
     load_asf_database()

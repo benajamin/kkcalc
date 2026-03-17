@@ -12,7 +12,7 @@ DEF_ITER: int = 50
 DEF_TOL: float = 1e-2
 """The default tolerance to use in improving the accuracy of the Kramers-Kronig transform."""
 
-from kkcalc import conversions  # noqa E402
+from kkcalc2 import conversions  # noqa E402
 
 
 def KK_General_PP(
